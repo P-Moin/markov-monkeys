@@ -11,7 +11,6 @@ module matmul_top #(
     input  wire clk,
     input  wire rst_n,
     input  wire start,
-    output reg busy,
     output reg done,
 
     input  wire ld_en,
@@ -122,7 +121,6 @@ module matmul_top #(
     always @(posedge clk) begin
         if (!rst_n) begin
             state <= IDLE;
-            busy <= 1'b0;
             done <= 1'b0;
             j_count <= '0;
             k_count <= '0;
@@ -143,7 +141,6 @@ module matmul_top #(
             case (state)
                 IDLE: begin
                     if (start) begin
-                        busy    <= 1'b1;
                         j_count <= '0;
                         k_count <= '0;
                         state   <= FEED;
@@ -166,14 +163,12 @@ module matmul_top #(
 
                 DRAIN: begin
                     if (result_write && (addr_pipe_1 == N-1)) begin
-                        busy  <= 1'b0;
                         done  <= 1'b1;
                         state <= IDLE;
                     end
                 end
 
                 default: begin
-                    busy  <= 1'b0;
                     state <= IDLE;
                 end
             endcase

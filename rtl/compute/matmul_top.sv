@@ -84,7 +84,7 @@ module matmul_top #(
         .ADDR_W (X_ADDR_W)
     ) u_x_mem (
         .clk   (clk),
-        .w_enable  (ld_en && ld_sel_ab && (ld_addr < N)),
+        .w_enable  (ld_en && !ld_sel_ab && (ld_addr < N)),
         .w_address (ld_addr[X_ADDR_W-1:0]),
         .w_data    (ld_data),
         .r_address (x_read_addr),
@@ -98,7 +98,7 @@ module matmul_top #(
         .ADDR_W (ADDR_W)
     ) u_p_mem (
         .clk   (clk),
-        .w_enable (ld_en && !ld_sel_ab && (ld_addr < N*N)),
+        .w_enable (ld_en && ld_sel_ab && (ld_addr < N*N)),
         .w_address (ld_addr),
         .w_data (ld_data),
         .r_address (p_read_addr),

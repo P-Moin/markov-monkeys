@@ -40,7 +40,7 @@ module markov_top_tb;
   reg signed [DW-1:0]    cur_vec   [0:N-1];   // running DW-range vector fed into each round
   reg signed [ACC_W-1:0] gold_raw  [0:N-1];   // this round's raw (unsaturated) result
   reg signed [ACC_W-1:0] final_raw [0:N-1];   // last round's raw result -- what should be read back
-  reg signed [DW-1:0] dut_vec [0:N-1];
+  reg signed [ACC_W-1:0] dut_vec [0:N-1];
 
   // DUT instantiation
   markov_top #(

@@ -107,13 +107,13 @@ module matmul_top #(
     //ld_sel_ab=1 loads X/A.
     Memory #(
         .DATA_D (N),
-        .DW     (ACC_W),
+        .DW     (DW),
         .ADDR_W (X_ADDR_W)
     ) u_x_mem (
         .clk       (clk),
         .w_enable  (ld_en && ld_sel_ab && (ld_addr < N)),
         .w_address (ld_addr[X_ADDR_W-1:0]),
-        .w_data({{(ACC_W-DW){ld_data[DW-1]}}, ld_data}),
+        .w_data(ld_data),
         .r_address (x_read_addr),
         .r_data    (mac_a)
     );

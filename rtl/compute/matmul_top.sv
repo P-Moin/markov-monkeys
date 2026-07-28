@@ -21,7 +21,7 @@ module matmul_top #(
 
     input  wire                     rd_en,
     input  wire [ADDR_W-1:0]        rd_addr,
-    output wire signed [DW-1:0]     rd_data
+    output wire signed [ACC_W-1:0]     rd_data
 );
 
     localparam integer X_ADDR_W = (N <= 1) ? 1 : $clog2(N);
@@ -59,8 +59,8 @@ module matmul_top #(
 
     wire result_write;
     wire signed [ACC_W-1:0] scaled_result;
-    wire signed [DW-1:0] formatted_result;
-    wire signed [DW-1:0] result_mem_data;
+    wire signed [ACC_W-1:0] formatted_result;
+    wire signed [ACC_W-1:0] result_mem_data;
 
     assign x_read_addr = k_count;
     assign p_read_addr = (k_count * N) + j_count;
@@ -74,24 +74,7 @@ module matmul_top #(
     // Round to the nearest signed fixed-point value before shifting.
     // For negative values, adding half-minus-one produces symmetric
     // round-to-nearest behavior with ties rounded away from zero.
-    generate
-        if (FRAC_W == 0) begin : GEN_NO_SCALING
-            assign scaled_result = mac_acc_out;
-        end
-        else begin : GEN_FIXED_POINT_SCALING
-            localparam signed [ACC_W-1:0] ROUND_HALF =
-                {{(ACC_W-1){1'b0}}, 1'b1} <<< (FRAC_W-1);
-
-            wire signed [ACC_W-1:0] rounded_acc;
-
-            assign rounded_acc =
-                (mac_acc_out >= 0)
-                ? mac_acc_out + ROUND_HALF
-                : mac_acc_out + ROUND_HALF - 1'b1;
-
-            assign scaled_result = rounded_acc >>> FRAC_W;
-        end
-    endgenerate
+    assign scaled_result = mac_acc_out;
 
     function automatic signed [DW-1:0] saturate_to_dw;
         input signed [ACC_W-1:0] value;
@@ -105,7 +88,7 @@ module matmul_top #(
         end
     endfunction
 
-    assign formatted_result = saturate_to_dw(scaled_result);
+    assign formatted_result = scaled_result;
 
     mac_unit #(
         .DW    (DW),
@@ -121,28 +104,28 @@ module matmul_top #(
         .valid_out (mac_valid_out)
     );
 
-    // Owen's convention: ld_sel_ab=0 loads X/A.
+    //ld_sel_ab=1 loads X/A.
     Memory #(
         .DATA_D (N),
-        .DW     (DW),
+        .DW     (ACC_W),
         .ADDR_W (X_ADDR_W)
     ) u_x_mem (
         .clk       (clk),
-        .w_enable  (ld_en && !ld_sel_ab && (ld_addr < N)),
+        .w_enable  (ld_en && ld_sel_ab && (ld_addr < N)),
         .w_address (ld_addr[X_ADDR_W-1:0]),
-        .w_data    (ld_data),
+        .w_data({{(ACC_W-DW){ld_data[DW-1]}}, ld_data}),
         .r_address (x_read_addr),
         .r_data    (mac_a)
     );
 
-    // Owen's convention: ld_sel_ab=1 loads P/B.
+    //ld_sel_ab=0 loads P/B.
     Memory #(
         .DATA_D (N*N),
         .DW     (DW),
         .ADDR_W (ADDR_W)
     ) u_p_mem (
         .clk       (clk),
-        .w_enable  (ld_en && ld_sel_ab && (ld_addr < N*N)),
+        .w_enable  (ld_en && !ld_sel_ab && (ld_addr < N*N)),
         .w_address (ld_addr),
         .w_data    (ld_data),
         .r_address (p_read_addr),
@@ -151,7 +134,7 @@ module matmul_top #(
 
     Memory #(
         .DATA_D (N),
-        .DW     (DW),
+        .DW     (ACC_W),
         .ADDR_W (CNT_W)
     ) u_result_mem (
         .clk       (clk),

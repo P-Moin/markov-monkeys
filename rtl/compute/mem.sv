@@ -1,38 +1,30 @@
 `timescale 1ns/1ps
 
-module mem #(
 
-    parameter int DEPTH = 64,
-    parameter int WIDTH = 8,
-    parameter int ADDR_W = $clog2(DEPTH)
+module Memory #(
+    parameter integer DW     = 8,
+    parameter integer DATA_D = 64,
+    parameter integer ADDR_W = (DATA_D <= 1) ? 1 : $clog2(DATA_D)
 ) (
-   
-    input  logic clk,
+    input  wire                       clk,
 
-    
-    input  logic                  we,
-    input  logic [ADDR_W-1:0]     waddr,
-    input  logic signed [WIDTH-1:0] wdata,
+    input  wire signed [DW-1:0]       w_data,
+    input  wire [ADDR_W-1:0]          w_address,
+    input  wire                       w_enable,
 
-   
-    input  logic [ADDR_W-1:0]     raddr,
-    output logic signed [WIDTH-1:0] rdata
+    input  wire [ADDR_W-1:0]          r_address,
+    output reg  signed [DW-1:0]       r_data
 );
 
-    
-    logic signed [WIDTH-1:0] memory [0:DEPTH-1];
+    reg signed [DW-1:0] memory [0:DATA_D-1];
 
-  
-    always_ff @(posedge clk) begin
-        if (we)
-            memory[waddr] <= wdata;
+    always @(posedge clk) begin
+        if (w_enable)
+            memory[w_address] <= w_data;
     end
 
-   
-    always_comb begin
-        rdata = memory[raddr];
+    always @(*) begin
+        r_data = memory[r_address];
     end
-
 
 endmodule
-

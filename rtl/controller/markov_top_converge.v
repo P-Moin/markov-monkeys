@@ -4,6 +4,7 @@ module markov_top #(
     parameter ACC_W  = 32,
     parameter ADDR_W = $clog2(N*N),
     parameter CYC_W  = 16,
+    parameter FRAC_W = 8,
     localparam CNT_W = (N <= 1) ? 1 : $clog2(N)
 )(
     input clk,
@@ -11,8 +12,11 @@ module markov_top #(
 
     // kicks off the whole N-cycle chain
     input start,
-    input [CYC_W-1:0] num_cycles,
-    output reg chain_done,          // pulses once the final vector is stored and safe to read
+    input [CYC_W-1:0] max_cycles,
+    input [ACC_W-1:0] tolerance,             
+ 
+    output reg chain_done,                   // pulses once the final vector is stored and safe to read
+    output reg converged,                    //Flags high if stopped early due to convergence
 
     input signed [N*N*DW-1:0] probability_matrix,
     input signed [N*DW-1:0]   initial_vector,
@@ -38,7 +42,9 @@ module markov_top #(
         .N(N),
         .DW(DW),
         .ACC_W(ACC_W),
-        .ADDR_W(ADDR_W)
+        .FRAC_W(FRAC_W),
+        .ADDR_W(ADDR_W),
+        .CNT_W(CNT_W)
     ) mm (
         .clk(clk),
         .rst_n(rst_n),
@@ -77,7 +83,7 @@ module markov_top #(
     assign rd_vec_data = state_mem_rdata;
 
     //
-    // Memory/Control - manages when things are stored to memory, as well as keeps track of the number of cycles and decides when to stop multiplying and instead output the final result
+    // Memory/Control - manages cycles and convergence checking
     //
     localparam IDLE    = 3'd0;
     localparam WAIT_MM = 3'd1;
@@ -87,26 +93,33 @@ module markov_top #(
     reg [CNT_W-1:0] idx;
     reg [CYC_W-1:0] cycles_left;
 
-    reg  first_readout;             // true until the very first pass's READOUT has fully finished
-    reg  signed [ACC_W-1:0] max_error;
+    // Convergence checking registers and wires
+    reg is_first_iteration;
+    reg exceeded_tolerance;
 
-    wire signed [ACC_W-1:0] error       = mm_rd_data - state_mem_rdata;
-    wire signed [ACC_W-1:0] abs_error   = error[ACC_W-1] ? -error : error;
-    wire signed [ACC_W-1:0] running_max = (idx == 0) ? abs_error : (abs_error > max_error) ? abs_error : max_error;
-    wire converged = !first_readout && (running_max <= $signed({1'b0, tolerance}));
+    wire is_readout_phase = (state == READOUT);
+    
+    // Difference calculation
+    wire signed [ACC_W:0] diff = $signed(mm_rd_data) - $signed(state_mem_rdata);
+    wire [ACC_W:0] abs_diff = diff[ACC_W] ? -diff : diff;
+    wire [ACC_W:0] tol_ext  = {1'b0, tolerance};
+    
+    wire current_exceeds = (abs_diff > tol_ext);
+    wire will_exceed     = exceeded_tolerance | current_exceeds;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            state       <= IDLE;
-            mm_start    <= 0;
-            chain_done  <= 0;
-            need_load   <= 0;
-            idx         <= 0;
-            mm_rd_addr  <= 0;
-            cycles_left <= 0;
-            vec_w_en    <= 0;
-            first_readout <= 1'b1;
-            max_error     <= 0;
+            state              <= IDLE;
+            mm_start           <= 0;
+            chain_done         <= 0;
+            converged          <= 0;
+            need_load          <= 0;
+            idx                <= 0;
+            mm_rd_addr         <= 0;
+            cycles_left        <= 0;
+            vec_w_en           <= 0;
+            is_first_iteration <= 1;
+            exceeded_tolerance <= 0;
         end
         else begin
 
@@ -118,20 +131,26 @@ module markov_top #(
 
                 IDLE: begin
                     if (start) begin
-                         cycles_left <= (max_cycles == 0) ? {CYC_W{1'b0}} : (max_cycles - 1'b1);
+                        need_load          <= 1'b1;
+                        cycles_left        <= (max_cycles == 0) ? 0 : max_cycles - 1'b1;
+                        is_first_iteration <= 1'b1;
+                        converged          <= 1'b0;
                     end
-                    else if (load_ready) begin
-                        need_load <= 0;
-                        mm_start  <= 1;
+
+                    if (load_ready) begin
+                        need_load <= 1'b0;
+                        mm_start  <= 1'b1;
                         state     <= WAIT_MM;
                     end
                 end
 
                 WAIT_MM: begin
                     if (mm_done) begin
-                        idx        <= 0;
-                        mm_rd_addr <= 0;
-                        state      <= READOUT;
+                        idx                <= 0;
+                        mm_rd_addr         <= 0;
+                        state              <= READOUT;
+                        // Force tolerance exceeded on first pass to ensure at least two iterations occur
+                        exceeded_tolerance <= is_first_iteration ? 1'b1 : 1'b0;
                     end
                 end
 
@@ -139,24 +158,26 @@ module markov_top #(
                     vec_w_addr <= idx;
                     vec_w_data <= mm_rd_data;
                     vec_w_en   <= 1;
-                    max_error  <= running_max;
 
-                     if (idx == N-1) begin
-                        if (converged || cycles_left == 0) begin
-                            chain_done    <= 1;
-                            first_readout <= 1'b0;
-                            state         <= IDLE;
+                    if (idx == N-1) begin
+                        is_first_iteration <= 1'b0;
+
+                        if (cycles_left == 0 || !will_exceed) begin
+                            chain_done <= 1'b1;
+                            converged  <= !will_exceed;
+                            state      <= IDLE;
                         end
                         else begin
-                            cycles_left   <= cycles_left - 1'b1;
-                            need_load     <= 1;
-                            first_readout <= 1'b0;
-                            state         <= IDLE;
+                            cycles_left <= cycles_left - 1'b1;
+                            need_load   <= 1'b1;
+                            state       <= IDLE;
                         end
                     end
                     else begin
-                        idx        <= idx + 1;
-                        mm_rd_addr <= idx + 1;
+                        idx        <= idx + 1'b1;
+                        mm_rd_addr <= idx + 1'b1;
+                        if (current_exceeds) 
+                            exceeded_tolerance <= 1'b1;
                     end
                 end
 
@@ -167,7 +188,6 @@ module markov_top #(
     //
     // Loader, sends state vectors into matmul to multiply them.
     //
-
     localparam S_IDLE   = 2'b00;
     localparam S_LOAD_P = 2'b01;
     localparam S_LOAD_X = 2'b10;
@@ -175,18 +195,6 @@ module markov_top #(
 
     localparam signed [ACC_W-1:0] DW_MAX = (1 <<< (DW-1)) - 1;
     localparam signed [ACC_W-1:0] DW_MIN = -(1 <<< (DW-1));
-
-    function automatic signed [DW-1:0] saturate;
-        input signed [ACC_W-1:0] val;
-        begin
-            if (val > DW_MAX)
-                saturate = DW_MAX[DW-1:0];
-            else if (val < DW_MIN)
-                saturate = DW_MIN[DW-1:0];
-            else
-                saturate = val[DW-1:0];
-        end
-    endfunction
 
     wire trigger = start | need_load;
 
@@ -206,7 +214,6 @@ module markov_top #(
 
                 S_IDLE: begin
                     load_ready <= 1'b0;
-
                     if (trigger) begin
                         load_count <= 0;
                         // P never changes across passes, so only reload it the first time
@@ -238,7 +245,6 @@ module markov_top #(
 
                 S_DONE: begin
                     load_ready <= 1'b1;
-
                     if (!trigger)
                         ldr_state <= S_IDLE;
                 end
@@ -253,32 +259,33 @@ module markov_top #(
         end
     end
 
-    wire loader_feeding_back = (ldr_state == S_LOAD_X) && !first_pass;  
-    assign state_mem_raddr = (state == READOUT) ? idx
-                            : loader_feeding_back ? load_count[CNT_W-1:0]
-                            : rd_vec_addr;
+    wire loader_feeding_back = (ldr_state == S_LOAD_X) && !first_pass;
+    
+    // Multi-way muxing for memory address to allow combinational readout during convergence check
+    assign state_mem_raddr = loader_feeding_back ? load_count[CNT_W-1:0] :
+                             is_readout_phase    ? idx[CNT_W-1:0] : 
+                                                   rd_vec_addr;
 
     always @(*) begin
         ld_en     = 1'b0;
         ld_sel_ab = 1'b0;
         ld_addr   = 0;
         ld_data   = 0;
-
         case (ldr_state)
 
             S_LOAD_P: begin
                 ld_en     = 1'b1;
-                ld_sel_ab = 1'b1;                        
+                ld_sel_ab = 1'b0;                          // P -> B
                 ld_addr   = load_count;
                 ld_data   = probability_matrix[load_count*DW +: DW];
             end
 
             S_LOAD_X: begin
                 ld_en     = 1'b1;
-                ld_sel_ab = 1'b0;                      
+                ld_sel_ab = 1'b1;                          // X -> A
                 ld_addr   = load_count;
                 ld_data   = first_pass ? initial_vector[load_count*DW +: DW]
-                                       : saturate(state_mem_rdata);
+                                       : state_mem_rdata [DW-1:0];
             end
 
         endcase

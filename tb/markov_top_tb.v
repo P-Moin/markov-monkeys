@@ -1,3 +1,5 @@
+
+
 `timescale 1ns/1ps
 
 module markov_top_tb;
@@ -7,10 +9,8 @@ module markov_top_tb;
   parameter DW    = 8;
   parameter ACC_W = 32;
   parameter CYC_W = 16;
+  parameter FRAC_W = 8;
   localparam CNT_W = (N <= 1) ? 1 : $clog2(N);
-
-  localparam integer DW_MAX = (1 << (DW-1)) - 1;   // +127
-  localparam integer DW_MIN = -(1 << (DW-1));      // -128
 
   localparam TIMEOUT_CYCLES = 5000;   // generous: round-1 in a base
                                        // (single-MAC) matmul_top can take
@@ -25,7 +25,7 @@ module markov_top_tb;
   reg signed [N*N*DW-1:0] probability_matrix;
   reg signed [N*DW-1:0]   initial_vector;
   reg  [CNT_W-1:0] rd_vec_addr;
-  wire signed [ACC_W-1:0] rd_vec_data;
+  wire signed [DW-1:0] rd_vec_data;
 
   integer errors;
   integer checks;
@@ -40,11 +40,11 @@ module markov_top_tb;
   reg signed [DW-1:0]    cur_vec   [0:N-1];   // running DW-range vector fed into each round
   reg signed [ACC_W-1:0] gold_raw  [0:N-1];   // this round's raw (unsaturated) result
   reg signed [ACC_W-1:0] final_raw [0:N-1];   // last round's raw result -- what should be read back
-  reg signed [ACC_W-1:0] dut_vec   [0:N-1];
+  reg signed [DW-1:0] dut_vec [0:N-1];
 
   // DUT instantiation
   markov_top #(
-    .N(N), .DW(DW), .ACC_W(ACC_W), .CYC_W(CYC_W)
+    .N(N), .DW(DW), .ACC_W(ACC_W), .CYC_W(CYC_W), .FRAC_W(FRAC_W))
   ) dut (
     .clk(clk), .rst_n(rst_n),
     .start(start), .num_cycles(num_cycles),
@@ -128,19 +128,6 @@ module markov_top_tb;
     end
   endtask
 
-  // Golden model helpers
-  function signed [DW-1:0] dw_saturate;
-    input integer val;
-    begin
-      if (val > DW_MAX)
-        dw_saturate = DW_MAX[DW-1:0];
-      else if (val < DW_MIN)
-        dw_saturate = DW_MIN[DW-1:0];
-      else
-        dw_saturate = val[DW-1:0];
-    end
-  endfunction
-
   // One round: gold_raw[j] = sum_k cur_vec[k] * mat_a[k][j]  (C1)
   task golden_multiply;
     integer gj, gk;
@@ -199,7 +186,7 @@ module markov_top_tb;
       for (r = 1; r <= eff_iters; r = r + 1) begin
         golden_multiply;
         if (r < eff_iters) begin
-          for (k = 0; k < N; k = k + 1) cur_vec[k] = dw_saturate(gold_raw[k]);
+          for (k = 0; k < N; k = k + 1) cur_vec[k] = gold_raw[k];
         end
         else begin
           for (k = 0; k < N; k = k + 1) final_raw[k] = gold_raw[k];

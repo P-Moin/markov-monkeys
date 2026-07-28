@@ -25,7 +25,7 @@ module markov_top_tb;
   reg signed [N*N*DW-1:0] probability_matrix;
   reg signed [N*DW-1:0]   initial_vector;
   reg  [CNT_W-1:0] rd_vec_addr;
-  wire signed [DW-1:0] rd_vec_data;
+  wire signed [ACC_W-1:0] rd_vec_data;
 
   integer errors;
   integer checks;
@@ -44,7 +44,7 @@ module markov_top_tb;
 
   // DUT instantiation
   markov_top #(
-    .N(N), .DW(DW), .ACC_W(ACC_W), .CYC_W(CYC_W), .FRAC_W(FRAC_W))
+    .N(N), .DW(DW), .ACC_W(ACC_W), .CYC_W(CYC_W), .FRAC_W(FRAC_W)
   ) dut (
     .clk(clk), .rst_n(rst_n),
     .start(start), .num_cycles(num_cycles),

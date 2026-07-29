@@ -1,14 +1,14 @@
 `timescale 1ns/1ps
 
-module markov_top_tb;
+module markov_top_converge_tb;
 
   // Parameters (must match DUT instantiation)
-  parameter N     = 8;
-  parameter DW    = 8;
-  parameter ACC_W = 32;
-  parameter CYC_W = 16;
-  parameter FRAC_W = 8;
-  localparam CNT_W = (N <= 1) ? 1 : $clog2(N);
+  parameter N       = 8;
+  parameter DW      = 8;
+  parameter ACC_W   = 32;
+  parameter CYC_W   = 16;
+  parameter FRAC_W  = 8;
+  localparam CNT_W  = (N <= 1) ? 1 : $clog2(N);
 
   localparam TIMEOUT_CYCLES = 5000;
 
@@ -41,11 +41,10 @@ module markov_top_tb;
   reg signed [ACC_W-1:0] final_raw [0:N-1];
   reg signed [ACC_W-1:0] prev_raw  [0:N-1]; 
   
-  // FIX: Make sure the output vector array matches ACC_W (32 bits), not DW (8 bits)
   reg signed [ACC_W-1:0] dut_vec   [0:N-1];
 
-  // DUT instantiation
-  markov_top #(
+  // DUT instantiation (FIXED: Module name matches markov_top_converge)
+  markov_top_converge #(
     .N(N), .DW(DW), .ACC_W(ACC_W), .CYC_W(CYC_W), .FRAC_W(FRAC_W)
   ) dut (
     .clk(clk), .rst_n(rst_n),
@@ -64,7 +63,7 @@ module markov_top_tb;
   initial clk = 1'b0;
   always #5 clk = ~clk;
 
-  // Reset
+  // Reset task
   task reset_dut;
     begin
       rst_n               = 1'b0;
@@ -86,7 +85,7 @@ module markov_top_tb;
     end
   endtask
 
-  // Wait for chain_done timeout
+  // Wait for chain_done with timeout guard
   task wait_for_chain_done;
     integer timeout_cnt;
     begin
@@ -102,7 +101,7 @@ module markov_top_tb;
     end
   endtask
 
-  // Pack matrix and vector data
+  // Pack matrix and vector data onto buses
   task pack_matrix_to_bus;
     begin
       for (i = 0; i < N; i = i + 1) begin
@@ -121,19 +120,19 @@ module markov_top_tb;
     end
   endtask
 
-  // Read the full vector out of the DUT
+  // Read full state vector out of DUT (FIXED: Clock edge alignment for synchronous RAM read)
   task read_state_vector;
     begin
       for (k = 0; k < N; k = k + 1) begin
-        @(posedge clk);
         rd_vec_addr = k[CNT_W-1:0];
+        @(posedge clk);
         #1;
         dut_vec[k] = rd_vec_data;
       end
     end
   endtask
 
-  // One round: gold_raw[j] = sum_k cur_vec[k] * mat_a[k][j]
+  // One matrix multiplication pass
   task golden_multiply;
     integer gj, gk;
     integer acc;
@@ -148,7 +147,7 @@ module markov_top_tb;
     end
   endtask
 
-  // Compare dut_vec against final_raw
+  // Compare output vector against golden model
   task compare_vec;
     input integer test_id;
     begin
@@ -163,7 +162,7 @@ module markov_top_tb;
     end
   endtask
 
-  // Full run of one Markov chain test with convergence verification
+  // Full execution driver
   task run_markov_test;
     input integer num_iters_req;
     input integer test_tolerance;
@@ -173,7 +172,6 @@ module markov_top_tb;
     reg expected_converged;
     reg tol_exceeded;
     
-    // 33-bit variables to prevent overflow during subtraction
     reg signed [ACC_W:0] diff;
     reg [ACC_W:0] abs_diff;
     
@@ -199,11 +197,10 @@ module markov_top_tb;
 
       for (k = 0; k < N; k = k + 1) cur_vec[k] = init_vec[k];
 
-      // Golden Model Convergence Loop
+      // Golden Convergence Model
       for (r = 1; (r <= eff_iters) && !expected_converged; r = r + 1) begin
         golden_multiply;
 
-        // Check for convergence if we are on iteration 2 or higher
         if (r >= 2) begin
           tol_exceeded = 1'b0;
           for (k = 0; k < N; k = k + 1) begin
@@ -223,7 +220,7 @@ module markov_top_tb;
         for (k = 0; k < N; k = k + 1) begin
           prev_raw[k]  = gold_raw[k];
           final_raw[k] = gold_raw[k];
-          cur_vec[k]   = gold_raw[k]; // Truncates implicitely down to DW to mimic DUT feedback slice
+          cur_vec[k]   = gold_raw[k][DW-1:0]; // Slice feedback
         end
       end
 
@@ -240,7 +237,7 @@ module markov_top_tb;
     end
   endtask
 
-  // Random INT8 helper
+  // Random INT8 generator helper
   function integer rand_int8;
     input integer dummy;
     integer rv;
@@ -266,7 +263,7 @@ module markov_top_tb;
     end
   endtask
 
-  // Test cases
+  // Main Test Stimulus
   integer t;
   integer n_iters;
   
@@ -286,7 +283,7 @@ module markov_top_tb;
     for (k = 0; k < N; k = k + 1) init_vec[k] = 8'sd40 + k;
     run_markov_test(1, 0, 1);
 
-    // T2: Hand-traceable 2-state block
+    // T2: 2-state block
     for (i = 0; i < N; i = i + 1)
       for (j = 0; j < N; j = j + 1)
         mat_a[i][j] = 8'sd0;
@@ -296,33 +293,28 @@ module markov_top_tb;
     init_vec[2] = 8'sd127; init_vec[3] = -8'sd128;
     run_markov_test(3, 0, 2);
 
-    // T3: All-zero matrix. Should trigger exact convergence (diff=0) on pass 2!
+    // T3: All-zero matrix (forces exact convergence on pass 2)
     for (i = 0; i < N; i = i + 1)
       for (j = 0; j < N; j = j + 1)
         mat_a[i][j] = 8'sd0;
     for (k = 0; k < N; k = k + 1) init_vec[k] = 8'sd77 - k;
-    run_markov_test(5, 0, 3); // Tell it to run 5 cycles, it should break at 2
+    run_markov_test(5, 0, 3);
 
-    // T4: Max-magnitude matrix and vector
+    // T4: Max-magnitude values
     for (i = 0; i < N; i = i + 1)
       for (j = 0; j < N; j = j + 1)
         mat_a[i][j] = 8'sd127;
     for (k = 0; k < N; k = k + 1) init_vec[k] = 8'sd127;
     run_markov_test(2, 0, 4);
 
-    // T5: num_cycles == 0 (behaves identically to 1)
+    // T5: Zero max cycles (defaults to 1 pass)
     for (i = 0; i < N; i = i + 1)
       for (j = 0; j < N; j = j + 1)
         mat_a[i][j] = (i == j) ? 8'sd64 : 8'sd10;
     for (k = 0; k < N; k = k + 1) init_vec[k] = 8'sd5 * k;
     run_markov_test(0, 0, 5);
     
-    // T6: Explicit Tolerance / Convergence Check
-    // Scale value by 2 each pass:
-    // P1: 5 * 2 = 10
-    // P2: 10 * 2 = 20 (Diff = 10 <= 25) ... DOES NOT BREAK YET
-    // P3: 20 * 2 = 40 (Diff = 20 <= 25) ... CONVERGES HERE!
-    // P4: 40 * 2 = 80 (Diff = 40 > 25)  ... Should not reach this
+    // T6: Convergence threshold verification
     for (i = 0; i < N; i = i + 1)
       for (j = 0; j < N; j = j + 1)
         mat_a[i][j] = 8'sd0;
@@ -337,9 +329,8 @@ module markov_top_tb;
       rand_vector;
       n_iters = ($random % 4);
       if (n_iters < 0) n_iters = n_iters + 4;
-      n_iters = n_iters + 1; // 1..4
+      n_iters = n_iters + 1;
       
-      // Random tolerance between 0 and 15
       run_markov_test(n_iters, ($random % 16), 100 + t);
     end
 

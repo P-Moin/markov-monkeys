@@ -88,6 +88,7 @@ module markov_top #(
     localparam IDLE    = 3'd0;
     localparam WAIT_MM = 3'd1;
     localparam READOUT = 3'd2;
+    localparam COMMIT  = 3'd3;
 
     reg [2:0] state;
     reg [CNT_W-1:0] idx;
@@ -96,6 +97,7 @@ module markov_top #(
     // Convergence checking registers and wires
     reg is_first_iteration;
     reg exceeded_tolerance;
+    reg final_exceeded;
 
     wire is_readout_phase = (state == READOUT);
     
@@ -120,6 +122,7 @@ module markov_top #(
             vec_w_en           <= 0;
             is_first_iteration <= 1;
             exceeded_tolerance <= 0;
+            final_exceeded      <= 0;
         end
         else begin
 
@@ -161,10 +164,23 @@ module markov_top #(
 
                     if (idx == N-1) begin
                         is_first_iteration <= 1'b0;
+                        final_exceeded      <= will_exceed;
+                        state               <= COMMIT;
+                    end
+                    else begin
+                        idx        <= idx + 1'b1;
+                        mm_rd_addr <= idx + 1'b1;
+                        if (current_exceeds)
+                            exceeded_tolerance <= 1'b1;
+                    end
+                end
 
-                        if (cycles_left == 0 || !will_exceed) begin
+                // Wait for the final registered state-memory write before
+                // reporting completion or launching the next iteration.
+                COMMIT: begin
+                        if (cycles_left == 0 || !final_exceeded) begin
                             chain_done <= 1'b1;
-                            converged  <= !will_exceed;
+                            converged  <= !final_exceeded;
                             state      <= IDLE;
                         end
                         else begin
@@ -172,13 +188,6 @@ module markov_top #(
                             need_load   <= 1'b1;
                             state       <= IDLE;
                         end
-                    end
-                    else begin
-                        idx        <= idx + 1'b1;
-                        mm_rd_addr <= idx + 1'b1;
-                        if (current_exceeds) 
-                            exceeded_tolerance <= 1'b1;
-                    end
                 end
 
             endcase

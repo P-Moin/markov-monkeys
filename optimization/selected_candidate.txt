@@ -1,0 +1,26 @@
+Selected run:
+runs/RUN_CODEX_PAR_FULL06_TWOITER_2026-07-28
+
+Selected config:
+openlane/config_parallel_exp06.json
+
+Canonical copied config:
+openlane/config.json
+optimization/final_config.json
+
+Selection basis:
+- all RTL and integration regressions pass
+- setup and hold pass in every reported PVT corner
+- routing, Magic, and KLayout DRC are zero
+- LVS errors are zero
+- lowest final antenna count tied among usable parallel candidates
+- best tied antenna ratios: 1.08 and 1.06
+- 22 max-slew violations, down from 175 in the first parallel run
+- 17 repair diodes, down from 33 in the first parallel run
+
+Remaining signoff failures:
+- 2 max-capacitance violations
+- 2 antenna nets / 2 antenna pins
+
+This candidate is not antenna- or electrical-signoff clean and must not be
+reported as a complete signoff pass.

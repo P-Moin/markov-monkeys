@@ -1,17 +1,3 @@
------------------------------------------------
------------------------------------------------
-
-
-IGNORE THIS FILE FOR NOW
-
-
-
------------------------------------------------
------------------------------------------------
-
-
-
-
 `timescale 1ns/1ps
 
 module parallel_matvec_core #(
@@ -56,6 +42,7 @@ module parallel_matvec_core #(
 
     wire lane_valid_in;
     wire lane_clear;
+    wire load_accept;
 
     reg final_pipe_0;
     reg final_pipe_1;
@@ -65,6 +52,7 @@ module parallel_matvec_core #(
 
     assign lane_valid_in = (state == FEED);
     assign lane_clear    = lane_valid_in && (k_count == 0);
+    assign load_accept   = ld_en && (state == IDLE);
 
     assign rd_data =
         (rd_en && (rd_addr < N)) ? result_mem[rd_addr] : '0;
@@ -73,16 +61,36 @@ module parallel_matvec_core #(
     generate
         for (g = 0; g < N; g = g + 1) begin : GEN_MAC
             wire signed [DW-1:0] p_value;
+            // A per-lane reset distribution register prevents the external
+            // reset input from directly driving every product/accumulator bit.
+            // The MAC reset is synchronous, so the one-cycle local delay is
+            // harmless: operands are loaded for many cycles before start.
+            (* keep = "true" *) reg lane_rst_n;
+            // Replicate the feed index so one global counter does not drive
+            // every operand mux in all N multiplier lanes.
+            (* keep = "true" *) reg [CNT_W-1:0] lane_k_count;
 
-            assign p_value = p_mem[(k_count * N) + g];
+            assign p_value = p_mem[(lane_k_count * N) + g];
+
+            always @(posedge clk)
+                lane_rst_n <= rst_n;
+
+            always @(posedge clk) begin
+                if (!rst_n)
+                    lane_k_count <= '0;
+                else if (state == IDLE && start)
+                    lane_k_count <= '0;
+                else if (state == FEED && lane_k_count != N-1)
+                    lane_k_count <= lane_k_count + 1'b1;
+            end
 
             mac_unit #(
                 .DW    (DW),
                 .ACC_W (ACC_W)
             ) u_mac (
                 .clk       (clk),
-                .rst_n     (rst_n),
-                .a         (x_mem[k_count]),
+                .rst_n     (lane_rst_n),
+                .a         (x_mem[lane_k_count]),
                 .b         (p_value),
                 .valid_in  (lane_valid_in),
                 .clear_acc (lane_clear),
@@ -93,7 +101,7 @@ module parallel_matvec_core #(
     endgenerate
 
     always @(posedge clk) begin
-        if (ld_en) begin
+        if (load_accept) begin
     
             if (ld_sel_ab) begin
                 if (ld_addr < N)
@@ -117,8 +125,6 @@ module parallel_matvec_core #(
             final_pipe_0 <= 1'b0;
             final_pipe_1 <= 1'b0;
 
-            for (i = 0; i < N; i = i + 1)
-                result_mem[i] <= '0;
         end
         else begin
             done <= 1'b0;

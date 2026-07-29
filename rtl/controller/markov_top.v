@@ -85,6 +85,7 @@ module markov_top #(
     localparam IDLE    = 3'd0;
     localparam WAIT_MM = 3'd1;
     localparam READOUT = 3'd2;
+    localparam COMMIT  = 3'd3;
 
     reg [2:0] state;
     reg [CNT_W-1:0] idx;
@@ -136,6 +137,17 @@ module markov_top #(
                     vec_w_en   <= 1;
 
                     if (idx == N-1) begin
+                        state <= COMMIT;
+                    end
+                    else begin
+                        idx        <= idx + 1;
+                        mm_rd_addr <= idx + 1;
+                    end
+                end
+
+                // vec_w_en/addr/data are registered.  This state holds the
+                // controller until the final state-memory write commits.
+                COMMIT: begin
                         if (cycles_left == 0) begin
                             chain_done <= 1;
                             state      <= IDLE;
@@ -145,11 +157,6 @@ module markov_top #(
                             need_load   <= 1;
                             state       <= IDLE;
                         end
-                    end
-                    else begin
-                        idx        <= idx + 1;
-                        mm_rd_addr <= idx + 1;
-                    end
                 end
 
             endcase

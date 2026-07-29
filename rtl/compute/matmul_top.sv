@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
-// One-MAC engine: X_next[j] = sum_k X[k] * P[k][j].
-module matmul_top #(
+// One-MAC reference engine: X_next[j] = sum_k X[k] * P[k][j].
+module serial_matvec_core #(
     parameter integer N      = 8,
     parameter integer DW     = 8,
     parameter integer ACC_W  = 32,
@@ -30,12 +30,6 @@ module matmul_top #(
     localparam [1:0] FEED  = 2'd1;
     localparam [1:0] DRAIN = 2'd2;
 
-    localparam signed [ACC_W-1:0] DW_MAX =
-        ({{(ACC_W-1){1'b0}}, 1'b1} <<< (DW-1)) - 1'b1;
-
-    localparam signed [ACC_W-1:0] DW_MIN =
-        -({{(ACC_W-1){1'b0}}, 1'b1} <<< (DW-1));
-
     reg [1:0] state;
 
     reg [CNT_W-1:0] j_count;
@@ -58,9 +52,9 @@ module matmul_top #(
     reg [CNT_W-1:0] addr_pipe_1;
 
     wire result_write;
-    wire signed [ACC_W-1:0] scaled_result;
     wire signed [ACC_W-1:0] formatted_result;
     wire signed [ACC_W-1:0] result_mem_data;
+    wire load_accept;
 
     assign x_read_addr = k_count;
     assign p_read_addr = (k_count * N) + j_count;
@@ -69,26 +63,12 @@ module matmul_top #(
     assign mac_clear_acc = mac_valid_in && (k_count == 0);
 
     assign result_write = mac_valid_out && final_pipe_1;
-    assign rd_data      = rd_en ? result_mem_data : '0;
+    assign rd_data      = (rd_en && (rd_addr < N)) ? result_mem_data : '0;
+    assign load_accept  = ld_en && (state == IDLE);
 
-    // Round to the nearest signed fixed-point value before shifting.
-    // For negative values, adding half-minus-one produces symmetric
-    // round-to-nearest behavior with ties rounded away from zero.
-    assign scaled_result = mac_acc_out;
-
-    function automatic signed [DW-1:0] saturate_to_dw;
-        input signed [ACC_W-1:0] value;
-        begin
-            if (value > DW_MAX)
-                saturate_to_dw = DW_MAX[DW-1:0];
-            else if (value < DW_MIN)
-                saturate_to_dw = DW_MIN[DW-1:0];
-            else
-                saturate_to_dw = value[DW-1:0];
-        end
-    endfunction
-
-    assign formatted_result = scaled_result;
+    // Integer-mode result-formatting boundary. FRAC_W is retained for
+    // interface compatibility but no fixed-point policy is defined yet.
+    assign formatted_result = mac_acc_out;
 
     mac_unit #(
         .DW    (DW),
@@ -111,7 +91,7 @@ module matmul_top #(
         .ADDR_W (X_ADDR_W)
     ) u_x_mem (
         .clk       (clk),
-        .w_enable  (ld_en && ld_sel_ab && (ld_addr < N)),
+        .w_enable  (load_accept && ld_sel_ab && (ld_addr < N)),
         .w_address (ld_addr[X_ADDR_W-1:0]),
         .w_data(ld_data),
         .r_address (x_read_addr),
@@ -125,7 +105,7 @@ module matmul_top #(
         .ADDR_W (ADDR_W)
     ) u_p_mem (
         .clk       (clk),
-        .w_enable  (ld_en && !ld_sel_ab && (ld_addr < N*N)),
+        .w_enable  (load_accept && !ld_sel_ab && (ld_addr < N*N)),
         .w_address (ld_addr),
         .w_data    (ld_data),
         .r_address (p_read_addr),
@@ -202,4 +182,77 @@ module matmul_top #(
         end
     end
 
+endmodule
+
+// Owen-compatible implementation selector.  The external protocol remains
+// load -> start -> wait for done -> read the complete stored result vector.
+module matmul_top #(
+    parameter integer N            = 8,
+    parameter integer DW           = 8,
+    parameter integer ACC_W        = 32,
+    parameter integer FRAC_W       = 8,
+    parameter integer ADDR_W       = (N*N <= 1) ? 1 : $clog2(N*N),
+    parameter integer CNT_W        = (N <= 1) ? 1 : $clog2(N),
+    parameter integer USE_PARALLEL = 1
+) (
+    input  wire                         clk,
+    input  wire                         rst_n,
+    input  wire                         start,
+    output wire                         done,
+    input  wire                         ld_en,
+    input  wire                         ld_sel_ab,
+    input  wire [ADDR_W-1:0]            ld_addr,
+    input  wire signed [DW-1:0]         ld_data,
+    input  wire                         rd_en,
+    input  wire [ADDR_W-1:0]            rd_addr,
+    output wire signed [ACC_W-1:0]      rd_data
+);
+    generate
+        if (USE_PARALLEL != 0) begin : GEN_PARALLEL
+            wire unused_busy;
+
+            parallel_matvec_core #(
+                .N(N),
+                .DW(DW),
+                .ACC_W(ACC_W),
+                .ADDR_W(ADDR_W),
+                .CNT_W(CNT_W)
+            ) impl (
+                .clk(clk),
+                .rst_n(rst_n),
+                .start(start),
+                .busy(unused_busy),
+                .done(done),
+                .ld_en(ld_en),
+                .ld_sel_ab(ld_sel_ab),
+                .ld_addr(ld_addr),
+                .ld_data(ld_data),
+                .rd_en(rd_en),
+                .rd_addr(rd_addr),
+                .rd_data(rd_data)
+            );
+        end
+        else begin : GEN_SERIAL
+            serial_matvec_core #(
+                .N(N),
+                .DW(DW),
+                .ACC_W(ACC_W),
+                .FRAC_W(FRAC_W),
+                .ADDR_W(ADDR_W),
+                .CNT_W(CNT_W)
+            ) impl (
+                .clk(clk),
+                .rst_n(rst_n),
+                .start(start),
+                .done(done),
+                .ld_en(ld_en),
+                .ld_sel_ab(ld_sel_ab),
+                .ld_addr(ld_addr),
+                .ld_data(ld_data),
+                .rd_en(rd_en),
+                .rd_addr(rd_addr),
+                .rd_data(rd_data)
+            );
+        end
+    endgenerate
 endmodule

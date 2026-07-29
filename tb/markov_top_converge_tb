@@ -30,6 +30,10 @@ module markov_top_tb;
   integer errors;
   integer checks;
   integer tests_run;
+  integer observed_iterations;
+  integer observed_chain_cycles;
+  integer random_seed;
+  reg inject_start_while_active;
 
   integer i, j, k, r;
   
@@ -45,7 +49,7 @@ module markov_top_tb;
   reg signed [ACC_W-1:0] dut_vec   [0:N-1];
 
   // DUT instantiation
-  markov_top #(
+  markov_top_converge #(
     .N(N), .DW(DW), .ACC_W(ACC_W), .CYC_W(CYC_W), .FRAC_W(FRAC_W)
   ) dut (
     .clk(clk), .rst_n(rst_n),
@@ -91,13 +95,32 @@ module markov_top_tb;
     integer timeout_cnt;
     begin
       timeout_cnt = 0;
+      observed_iterations = 0;
       while ((chain_done !== 1'b1) && (timeout_cnt < TIMEOUT_CYCLES)) begin
         @(posedge clk);
+        #1;
         timeout_cnt = timeout_cnt + 1;
+        if (dut.mm_start)
+          observed_iterations = observed_iterations + 1;
+        if (inject_start_while_active && timeout_cnt == 3)
+          start = 1'b1;
+        else if (inject_start_while_active && timeout_cnt == 4)
+          start = 1'b0;
       end
+      start = 1'b0;
+      observed_chain_cycles = timeout_cnt;
       if (chain_done !== 1'b1) begin
         $display("ERROR: [wait_for_chain_done] TIMEOUT after %0d cycles", TIMEOUT_CYCLES);
         errors = errors + 1;
+      end
+      else begin
+        @(posedge clk);
+        #1;
+        checks = checks + 1;
+        if (chain_done !== 1'b0) begin
+          $display("ERROR: chain_done exceeded one cycle");
+          errors = errors + 1;
+        end
       end
     end
   endtask
@@ -170,6 +193,7 @@ module markov_top_tb;
     input integer test_id;
     
     integer eff_iters;
+    integer expected_iterations;
     reg expected_converged;
     reg tol_exceeded;
     
@@ -195,12 +219,14 @@ module markov_top_tb;
       wait_for_chain_done;
 
       eff_iters = (num_iters_req == 0) ? 1 : num_iters_req;
+      expected_iterations = 0;
       expected_converged = 1'b0;
 
       for (k = 0; k < N; k = k + 1) cur_vec[k] = init_vec[k];
 
       // Golden Model Convergence Loop
       for (r = 1; (r <= eff_iters) && !expected_converged; r = r + 1) begin
+        expected_iterations = expected_iterations + 1;
         golden_multiply;
 
         // Check for convergence if we are on iteration 2 or higher
@@ -235,8 +261,15 @@ module markov_top_tb;
          $display("ERROR: test %0d CONVERGENCE MISMATCH: dut=%b gold=%b", test_id, converged, expected_converged);
          errors = errors + 1;
       end
+      checks = checks + 1;
+      if (observed_iterations != expected_iterations) begin
+        $display("ERROR: test %0d ITERATION COUNT: dut=%0d gold=%0d",
+                 test_id, observed_iterations, expected_iterations);
+        errors = errors + 1;
+      end
 
-      $display("---- Finished test %0d ----", test_id);
+      $display("---- Finished test %0d: iterations=%0d cycles=%0d ----",
+               test_id, observed_iterations, observed_chain_cycles);
     end
   endtask
 
@@ -245,7 +278,7 @@ module markov_top_tb;
     input integer dummy;
     integer rv;
     begin
-      rv = $random % 256;
+      rv = $random(random_seed) % 256;
       if (rv < 0) rv = rv + 256;
       rand_int8 = rv - 128;
     end
@@ -269,11 +302,14 @@ module markov_top_tb;
   // Test cases
   integer t;
   integer n_iters;
+  integer random_tolerance;
   
   initial begin
     errors     = 0;
     checks     = 0;
     tests_run  = 0;
+    random_seed = 32'h434f4e56;
+    inject_start_while_active = 1'b0;
     rst_n      = 1'b0;
     start      = 1'b0;
     max_cycles = {CYC_W{1'b0}};
@@ -320,9 +356,7 @@ module markov_top_tb;
     // T6: Explicit Tolerance / Convergence Check
     // Scale value by 2 each pass:
     // P1: 5 * 2 = 10
-    // P2: 10 * 2 = 20 (Diff = 10 <= 25) ... DOES NOT BREAK YET
-    // P3: 20 * 2 = 40 (Diff = 20 <= 25) ... CONVERGES HERE!
-    // P4: 40 * 2 = 80 (Diff = 40 > 25)  ... Should not reach this
+    // P2: 10 * 2 = 20 (Diff = 10 <= 25), so it converges on pass 2.
     for (i = 0; i < N; i = i + 1)
       for (j = 0; j < N; j = j + 1)
         mat_a[i][j] = 8'sd0;
@@ -331,17 +365,79 @@ module markov_top_tb;
     init_vec[0] = 8'sd5;
     run_markov_test(10, 25, 6);
 
+    // T7: unchanged vector may converge, but never on the first iteration.
+    for (i = 0; i < N; i = i + 1)
+      for (j = 0; j < N; j = j + 1)
+        mat_a[i][j] = (i == j) ? 8'sd1 : 8'sd0;
+    for (k = 0; k < N; k = k + 1) init_vec[k] = k - 4;
+    run_markov_test(5, 0, 7);
+
+    // T8/T9: only the final vector element is outside/at the tolerance.
+    for (i = 0; i < N; i = i + 1)
+      for (j = 0; j < N; j = j + 1)
+        mat_a[i][j] = (i == j) ? 8'sd1 : 8'sd0;
+    mat_a[N-1][N-1] = 8'sd2;
+    for (k = 0; k < N; k = k + 1) init_vec[k] = 8'sd0;
+    init_vec[N-1] = 8'sd1;
+    run_markov_test(2, 1, 8);
+    run_markov_test(5, 2, 9);
+
+    // T10: oscillating signed state crosses zero and exhausts max_cycles.
+    for (i = 0; i < N; i = i + 1)
+      for (j = 0; j < N; j = j + 1)
+        mat_a[i][j] = (i == j) ? -8'sd1 : 8'sd0;
+    for (k = 0; k < N; k = k + 1) init_vec[k] = k + 1;
+    inject_start_while_active = 1'b1;
+    run_markov_test(4, 0, 10);
+    inject_start_while_active = 1'b0;
+
+    // T11: the maximum unsigned tolerance covers every reachable difference.
+    for (i = 0; i < N; i = i + 1)
+      for (j = 0; j < N; j = j + 1)
+        mat_a[i][j] = (i == j) ? 8'sd127 : -8'sd3;
+    for (k = 0; k < N; k = k + 1) init_vec[k] = (k[0]) ? -8'sd128 : 8'sd127;
+    run_markov_test(8, 32'h7fffffff, 11);
+
     // Randomized tests
     for (t = 0; t < 20; t = t + 1) begin
       rand_matrix;
       rand_vector;
-      n_iters = ($random % 4);
+      n_iters = ($random(random_seed) % 4);
       if (n_iters < 0) n_iters = n_iters + 4;
       n_iters = n_iters + 1; // 1..4
-      
-      // Random tolerance between 0 and 15
-      run_markov_test(n_iters, ($random % 16), 100 + t);
+
+      random_tolerance = $random(random_seed) % 16;
+      if (random_tolerance < 0)
+        random_tolerance = random_tolerance + 16;
+      run_markov_test(n_iters, random_tolerance, 100 + t);
     end
+
+    // A second independent chain without reset must reload both P and X.
+    // The previous implementation incorrectly fed back the prior chain here.
+    for (i = 0; i < N; i = i + 1)
+      for (j = 0; j < N; j = j + 1)
+        mat_a[i][j] = (i == j) ? 8'sd1 : 8'sd0;
+    for (k = 0; k < N; k = k + 1) init_vec[k] = 8'sd31 - k;
+    pack_matrix_to_bus;
+    pack_vector_to_bus;
+    @(posedge clk);
+    start = 1'b1;
+    max_cycles = 1;
+    tolerance = 0;
+    @(posedge clk);
+    start = 1'b0;
+    wait_for_chain_done;
+    for (k = 0; k < N; k = k + 1)
+      final_raw[k] = init_vec[k];
+    read_state_vector;
+    compare_vec(1000);
+    checks = checks + 2;
+    if (observed_iterations != 1 || converged !== 1'b0) begin
+      $display("ERROR: repeated independent start iterations=%0d converged=%b",
+               observed_iterations, converged);
+      errors = errors + 1;
+    end
+    tests_run = tests_run + 1;
 
     // Summary
     $display("=====================================================");

@@ -83,9 +83,10 @@ module markov_top #(
     // Memory/Control - manages when things are stored to memory, as well as keeps track of the number of cycles and decides when to stop multiplying and instead output the final result
     //
     localparam IDLE    = 3'd0;
-    localparam WAIT_MM = 3'd1;
-    localparam READOUT = 3'd2;
-    localparam COMMIT  = 3'd3;
+    localparam LOAD    = 3'd1;
+    localparam WAIT_MM = 3'd2;
+    localparam READOUT = 3'd3;
+    localparam COMMIT  = 3'd4;
 
     reg [2:0] state;
     reg [CNT_W-1:0] idx;
@@ -114,8 +115,11 @@ module markov_top #(
                     if (start) begin
                         need_load <= 1'b1;
                         cycles_left <= (num_cycles == 0) ? 0 : num_cycles-1;
+                        state <= LOAD;
                     end
+                end
 
+                LOAD: begin
                     if (load_ready) begin
                         need_load <= 1'b0;
                         mm_start <= 1'b1;
@@ -155,7 +159,7 @@ module markov_top #(
                         else begin
                             cycles_left <= cycles_left - 1'b1;
                             need_load   <= 1;
-                            state       <= IDLE;
+                            state       <= LOAD;
                         end
                 end
 
@@ -175,7 +179,8 @@ module markov_top #(
     localparam signed [ACC_W-1:0] DW_MAX = (1 <<< (DW-1)) - 1;
     localparam signed [ACC_W-1:0] DW_MIN = -(1 <<< (DW-1));
 
-    wire trigger = start | need_load;
+    wire new_chain_start = start && (state == IDLE);
+    wire trigger = new_chain_start | need_load;
 
     reg [1:0] ldr_state;
     reg [ADDR_W-1:0] load_count;
@@ -194,9 +199,13 @@ module markov_top #(
                 S_IDLE: begin
                     load_ready <= 1'b0;
 
-                    if (trigger) begin
+                    if (new_chain_start) begin
+                        first_pass <= 1'b1;
                         load_count <= 0;
-                        // P never changes across passes, so only reload it the first time
+                        ldr_state <= S_LOAD_P;
+                    end
+                    else if (need_load) begin
+                        load_count <= 0;
                         ldr_state <= first_pass ? S_LOAD_P : S_LOAD_X;
                     end
                 end

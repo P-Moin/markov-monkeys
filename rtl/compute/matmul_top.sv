@@ -55,6 +55,7 @@ module serial_matvec_core #(
     wire signed [ACC_W-1:0] formatted_result;
     wire signed [ACC_W-1:0] result_mem_data;
     wire load_accept;
+    reg results_valid;
 
     assign x_read_addr = k_count;
     assign p_read_addr = (k_count * N) + j_count;
@@ -63,7 +64,7 @@ module serial_matvec_core #(
     assign mac_clear_acc = mac_valid_in && (k_count == 0);
 
     assign result_write = mac_valid_out && final_pipe_1;
-    assign rd_data      = (rd_en && (rd_addr < N)) ? result_mem_data : '0;
+    assign rd_data      = (rd_en && results_valid && (rd_addr < N)) ? result_mem_data : '0;
     assign load_accept  = ld_en && (state == IDLE);
 
     // Integer-mode result-formatting boundary. FRAC_W is retained for
@@ -135,6 +136,7 @@ module serial_matvec_core #(
             final_pipe_1 <= 1'b0;
             addr_pipe_0  <= '0;
             addr_pipe_1  <= '0;
+            results_valid <= 1'b0;
         end
         else begin
             done <= 1'b0;
@@ -150,6 +152,7 @@ module serial_matvec_core #(
                     if (start) begin
                         j_count <= '0;
                         k_count <= '0;
+                        results_valid <= 1'b0;
                         state   <= FEED;
                     end
                 end
@@ -171,6 +174,7 @@ module serial_matvec_core #(
                 DRAIN: begin
                     if (result_write && (addr_pipe_1 == N-1)) begin
                         done  <= 1'b1;
+                        results_valid <= 1'b1;
                         state <= IDLE;
                     end
                 end

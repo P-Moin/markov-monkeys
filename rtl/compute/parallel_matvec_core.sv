@@ -39,6 +39,7 @@ module parallel_matvec_core #(
     reg signed [DW-1:0] p_mem [0:N*N-1];
 
     reg signed [ACC_W-1:0] result_mem [0:N-1];
+    reg results_valid;
 
     wire lane_valid_in;
     wire lane_clear;
@@ -55,7 +56,7 @@ module parallel_matvec_core #(
     assign load_accept   = ld_en && (state == IDLE);
 
     assign rd_data =
-        (rd_en && (rd_addr < N)) ? result_mem[rd_addr] : '0;
+        (rd_en && results_valid && (rd_addr < N)) ? result_mem[rd_addr] : '0;
 
     genvar g;
     generate
@@ -124,6 +125,7 @@ module parallel_matvec_core #(
             k_count      <= '0;
             final_pipe_0 <= 1'b0;
             final_pipe_1 <= 1'b0;
+            results_valid <= 1'b0;
 
         end
         else begin
@@ -137,6 +139,7 @@ module parallel_matvec_core #(
                     if (start) begin
                         busy    <= 1'b1;
                         k_count <= '0;
+                        results_valid <= 1'b0;
                         state   <= FEED;
                     end
                 end
@@ -161,6 +164,7 @@ module parallel_matvec_core #(
 
                     busy  <= 1'b0;
                     done  <= 1'b1;
+                    results_valid <= 1'b1;
                     state <= IDLE;
                 end
 

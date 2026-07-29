@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 
-module matvec_equiv_tb;
-    localparam integer N      = 4;
+module matvec_equiv_tb #(
+    parameter integer N = 4
+);
     localparam integer DW     = 8;
     localparam integer ACC_W  = 32;
     localparam integer ADDR_W = $clog2(N*N);
@@ -313,6 +314,18 @@ module matvec_equiv_tb;
         seed = SEED;
         reset_duts;
         $display("Deterministic seed: 0x%08x", SEED);
+
+        // Valid result addresses are defined as zero until an operation
+        // completes, including immediately after reset.
+        rd_en = 1'b1;
+        rd_addr = '0;
+        #1;
+        checks = checks + 2;
+        if (serial_data !== '0 || parallel_data !== '0) begin
+            $display("ERROR: result read after reset was not zero");
+            errors = errors + 1;
+        end
+        rd_en = 1'b0;
 
         // Identity.
         for (i = 0; i < N; i = i + 1) begin

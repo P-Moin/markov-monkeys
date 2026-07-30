@@ -1,0 +1,208 @@
+[
+  {
+    "experiment": 0,
+    "description": "serial one-MAC reference baseline",
+    "result_original": "reference pass",
+    "git_branch": "agent/add-openlane-signoff-config",
+    "git_commit": "372a29d",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config.json"
+  },
+  {
+    "experiment": 1,
+    "description": "initial N-lane parallel architecture",
+    "result_original": "synthesis-only; continued",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "medium",
+    "config_file": "project::results/full_metrics/reconstructed_parallel_initial_config.json",
+    "archived_state": "runs/RUN_CODEX_PAR_SYNTH_2026-07-28/06-yosys-synthesis/state_out.json",
+    "compatibility_patch": "resume preserved archived synthesis because exact pre-commit RTL was not committed"
+  },
+  {
+    "experiment": 2,
+    "description": "initial parallel pre-PnR baseline with shared feed-index/reset distribution",
+    "result_original": "rejected for setup",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "low",
+    "config_file": "project::results/full_metrics/reconstructed_parallel_initial_config.json",
+    "archived_state": "runs/RUN_CODEX_PAR_PREPNR_2026-07-28/06-yosys-synthesis/state_out.json",
+    "compatibility_patch": "resume preserved archived synthesis because exact RTL was not committed"
+  },
+  {
+    "experiment": 3,
+    "description": "local per-lane feed-index distribution registers",
+    "result_original": "kept architecture",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "project::results/full_metrics/reconstructed_parallel_initial_config.json",
+    "archived_state": "runs/RUN_CODEX_PAR_PREPNR_KDIST_2026-07-28/06-yosys-synthesis/state_out.json",
+    "compatibility_patch": "resume preserved archived synthesis state"
+  },
+  {
+    "experiment": 4,
+    "description": "local synchronous reset distribution without retained feed-index change",
+    "result_original": "rejected in isolation",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "low",
+    "config_file": "project::results/full_metrics/reconstructed_parallel_initial_config.json",
+    "archived_state": "runs/RUN_CODEX_PAR_PREPNR_RST_2026-07-28/06-yosys-synthesis/state_out.json",
+    "compatibility_patch": "resume preserved archived synthesis because exact RTL was not committed"
+  },
+  {
+    "experiment": 5,
+    "description": "first full N-lane parallel flow",
+    "result_original": "rejected electrical and antenna",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "project::results/full_metrics/reconstructed_parallel_initial_config.json",
+    "compatibility_patch": "reconstructed original 10-iteration config because config.json was later updated"
+  },
+  {
+    "experiment": 6,
+    "description": "post-global-routing design repair",
+    "result_original": "rejected; antenna worsened",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_parallel_exp02.json"
+  },
+  {
+    "experiment": 7,
+    "description": "tighter electrical repair and increased antenna repair",
+    "result_original": "rejected antenna and capacitance",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_parallel_exp03.json"
+  },
+  {
+    "experiment": 8,
+    "description": "lower heuristic antenna threshold and diode padding",
+    "result_original": "rejected setup/electrical/antenna",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_parallel_exp04.json"
+  },
+  {
+    "experiment": 9,
+    "description": "heuristic diode insertion disabled",
+    "result_original": "rejected severe antenna",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_parallel_exp05.json"
+  },
+  {
+    "experiment": 10,
+    "description": "two antenna-repair iterations",
+    "result_original": "selected parallel candidate",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_parallel_exp06.json"
+  },
+  {
+    "experiment": 11,
+    "description": "two antenna iterations with 40 percent margin",
+    "result_original": "rejected antenna worsened",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_parallel_exp07.json"
+  },
+  {
+    "experiment": 12,
+    "description": "one antenna-repair iteration",
+    "result_original": "rejected capacitance and antenna ratio",
+    "git_branch": "parallel-core",
+    "git_commit": "e8d7349",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_parallel_exp08.json"
+  },
+  {
+    "experiment": 13,
+    "description": "corrected parallel-controller restart/load/commit behavior",
+    "result_original": "synthesis-only; kept RTL",
+    "git_branch": "parallel-convergence-optimization",
+    "git_commit": "546fdb9",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_parallel_exp06.json"
+  },
+  {
+    "experiment": 14,
+    "description": "unregistered convergence subtract/absolute-value/compare datapath",
+    "result_original": "synthesis-only; continued",
+    "git_branch": "parallel-convergence-optimization",
+    "git_commit": "546fdb9",
+    "mapping_confidence": "low",
+    "config_file": "openlane/config_converge_exp09.json",
+    "archived_state": "runs/RUN_CODEX_CONV_SYNTH09_2026-07-29/06-yosys-synthesis/state_out.json",
+    "compatibility_patch": "resume preserved archived synthesis because exact RTL was not committed"
+  },
+  {
+    "experiment": 15,
+    "description": "measured unregistered convergence path",
+    "result_original": "rejected architectural setup failure",
+    "git_branch": "parallel-convergence-optimization",
+    "git_commit": "546fdb9",
+    "mapping_confidence": "medium",
+    "config_file": "openlane/config_converge_exp09.json",
+    "archived_state": "runs/RUN_CODEX_CONV_PREPNR11_2026-07-29/06-yosys-synthesis/state_out.json",
+    "compatibility_patch": "resume preserved archived synthesis because exact RTL was not committed"
+  },
+  {
+    "experiment": 16,
+    "description": "registered operands and bounds comparison with tolerance unregistered",
+    "result_original": "rejected remaining setup failure",
+    "git_branch": "parallel-convergence-optimization",
+    "git_commit": "546fdb9",
+    "mapping_confidence": "medium",
+    "config_file": "openlane/config_converge_exp09.json",
+    "archived_state": "runs/RUN_CODEX_CONV_PREPNR12_PIPE_2026-07-29/06-yosys-synthesis/state_out.json",
+    "compatibility_patch": "resume preserved archived synthesis because exact RTL was not committed"
+  },
+  {
+    "experiment": 17,
+    "description": "registered convergence tolerance",
+    "result_original": "kept architecture",
+    "git_branch": "parallel-convergence-optimization",
+    "git_commit": "546fdb9",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_converge_exp09.json",
+    "archived_state": "runs/RUN_CODEX_CONV_PREPNR13_TOLREG_2026-07-29/06-yosys-synthesis/state_out.json",
+    "compatibility_patch": "resume preserved archived synthesis state"
+  },
+  {
+    "experiment": 18,
+    "description": "full pipelined convergence candidate",
+    "result_original": "selected near-clean convergence candidate",
+    "git_branch": "parallel-convergence-optimization",
+    "git_commit": "546fdb9",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_converge_exp09.json"
+  },
+  {
+    "experiment": 19,
+    "description": "three antenna-repair iterations",
+    "result_original": "rejected antenna worsened",
+    "git_branch": "parallel-convergence-optimization",
+    "git_commit": "546fdb9",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_converge_exp10.json"
+  },
+  {
+    "experiment": 20,
+    "description": "30 percent slew-repair target",
+    "result_original": "rejected slew and antenna worsened",
+    "git_branch": "parallel-convergence-optimization",
+    "git_commit": "546fdb9",
+    "mapping_confidence": "high",
+    "config_file": "openlane/config_converge_exp11.json"
+  }
+]

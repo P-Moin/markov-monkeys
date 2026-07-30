@@ -1,0 +1,38 @@
+{
+  "campaign_date": "2026-07-30",
+  "clock_policy": "17 ns unless historical configuration differs",
+  "default_corner": "nom_tt_025C_1v80",
+  "die_area_um": [
+    0,
+    0,
+    600,
+    600
+  ],
+  "git_version": "2.53.0",
+  "host_python_version": "3.14.4",
+  "jobs": 8,
+  "klayout_version": "0.30.0",
+  "magic_version": "8.3.105",
+  "openlane_command": "nix run --offline /home/pmoin/openlane2#openlane",
+  "openlane_version": "2.3.10",
+  "openroad_version": "edf00dff99f6c40d67a30c0e22a8191c5d2ed9d6",
+  "pdk": "sky130A",
+  "pdk_root": "/home/pmoin/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af",
+  "pdk_version": "open_pdks 0fe599b2afb6708d281543108caf8310912f54af",
+  "power_activity": "OpenROAD vectorless defaults",
+  "power_method": "OpenROAD report_power after post-route extraction",
+  "power_reference_corner": "max_ff_n40C_1v95",
+  "sta_corners": [
+    "nom_tt_025C_1v80",
+    "nom_ss_100C_1v60",
+    "nom_ff_n40C_1v95",
+    "min_tt_025C_1v80",
+    "min_ss_100C_1v60",
+    "min_ff_n40C_1v95",
+    "max_tt_025C_1v80",
+    "max_ss_100C_1v60",
+    "max_ff_n40C_1v95"
+  ],
+  "standard_cell_library": "sky130_fd_sc_hd",
+  "yosys_version": "0.46 (e97731b9dda91fa5fa53ed87df7c34163ba59a41)"
+}

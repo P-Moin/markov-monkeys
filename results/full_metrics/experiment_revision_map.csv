@@ -1,0 +1,22 @@
+experiment,branch,commit,config,rtl_top,evidence,confidence,compatibility_patch
+00,agent/add-openlane-signoff-config,372a29d,openlane/config.json,markov_top,"serial baseline run and config committed together",high,none
+01,parallel-core,e8d7349,archived RUN_CODEX_PAR_SYNTH resolved config,markov_top,"archived synthesis has 9493 cells; campaign commit contains N-lane architecture",medium,"resume preserved synthesis state because exact pre-commit RTL was not committed"
+02,parallel-core,e8d7349,archived RUN_CODEX_PAR_PREPNR resolved config,markov_top,"archived pre-PnR state matches shared feed-index/reset description",low,"resume preserved pre-PnR state because exact RTL was not committed"
+03,parallel-core,e8d7349,archived RUN_CODEX_PAR_PREPNR_KDIST resolved config,markov_top,"9965-cell archived state matches committed per-lane feed-index implementation",high,"resume preserved pre-PnR state"
+04,parallel-core,e8d7349,archived RUN_CODEX_PAR_PREPNR_RST resolved config,markov_top,"9403-cell archived state isolates reset distribution and differs from committed final RTL",low,"resume preserved pre-PnR state because exact RTL was not committed"
+05,parallel-core,e8d7349,reconstructed initial full-flow config,markov_top,"RUN_CODEX_PAR_FULL01 synthesis matches e8d7349 at 9965 cells",high,"restore original 10 antenna iterations because config.json was later updated"
+06,parallel-core,e8d7349,openlane/config_parallel_exp02.json,markov_top,"config and RTL committed in e8d7349; archived full run matches",high,none
+07,parallel-core,e8d7349,openlane/config_parallel_exp03.json,markov_top,"config and RTL committed in e8d7349; archived full run matches",high,none
+08,parallel-core,e8d7349,openlane/config_parallel_exp04.json,markov_top,"config and RTL committed in e8d7349; archived full run matches",high,none
+09,parallel-core,e8d7349,openlane/config_parallel_exp05.json,markov_top,"config and RTL committed in e8d7349; archived full run matches",high,none
+10,parallel-core,e8d7349,openlane/config_parallel_exp06.json,markov_top,"selected parallel config and RTL committed in e8d7349",high,none
+11,parallel-core,e8d7349,openlane/config_parallel_exp07.json,markov_top,"config and RTL committed in e8d7349; archived full run matches",high,none
+12,parallel-core,e8d7349,openlane/config_parallel_exp08.json,markov_top,"config and RTL committed in e8d7349; archived full run matches",high,none
+13,parallel-convergence-optimization,546fdb9,openlane/config_parallel_exp06.json,markov_top,"corrected normal controller committed in 546fdb9; archived synthesis has 10025 cells",high,none
+14,parallel-convergence-optimization,546fdb9,archived RUN_CODEX_CONV_SYNTH09 resolved config,markov_top_converge,"archived 10479-cell unregistered convergence synthesis predates final comparator commit",low,"resume preserved synthesis state because exact RTL was not committed"
+15,parallel-convergence-optimization,546fdb9,archived RUN_CODEX_CONV_PREPNR11 resolved config,markov_top_converge,"archived -9.1549 ns pre-PnR state identifies unregistered path",medium,"resume preserved pre-PnR state because exact RTL was not committed"
+16,parallel-convergence-optimization,546fdb9,archived RUN_CODEX_CONV_PREPNR12_PIPE resolved config,markov_top_converge,"archived 10583-cell state and -0.2703 ns slack identify operand-only pipeline",medium,"resume preserved pre-PnR state because exact RTL was not committed"
+17,parallel-convergence-optimization,546fdb9,archived RUN_CODEX_CONV_PREPNR13_TOLREG resolved config,markov_top_converge,"10730-cell state and +1.8365 ns slack match committed tolerance register",high,"resume preserved pre-PnR state"
+18,parallel-convergence-optimization,546fdb9,openlane/config_converge_exp09.json,markov_top_converge,"selected convergence RTL/config committed in 546fdb9",high,none
+19,parallel-convergence-optimization,546fdb9,openlane/config_converge_exp10.json,markov_top_converge,"three-iteration config and convergence RTL committed in 546fdb9",high,none
+20,parallel-convergence-optimization,546fdb9,openlane/config_converge_exp11.json,markov_top_converge,"30-percent slew config and convergence RTL committed in 546fdb9",high,none

@@ -1,0 +1,11 @@
+Selected run: runs/RUN_CODEX_PAR_FULL06_TWOITER_2026-07-28
+
+P/R  Partial  Required  Net      Pin          Layer
+1.08 430.05   400.00    _04264_  _09046_/B1  met1
+1.06 422.14   400.00    net628   output628/A  met1
+
+Violating nets: 2
+Violating pins: 2
+
+Source:
+runs/RUN_CODEX_PAR_FULL06_TWOITER_2026-07-28/46-openroad-checkantennas-1/reports/antenna_summary.rpt

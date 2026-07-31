@@ -1,4 +1,4 @@
-module markov_top #(
+module markov_top_converge #(
     parameter N      = 8,
     parameter DW     = 8,
     parameter ACC_W  = 32,
@@ -86,26 +86,36 @@ module markov_top #(
     // Memory/Control - manages cycles and convergence checking
     //
     localparam IDLE    = 3'd0;
-    localparam WAIT_MM = 3'd1;
-    localparam READOUT = 3'd2;
+    localparam LOAD    = 3'd1;
+    localparam WAIT_MM = 3'd2;
+    localparam READOUT = 3'd3;
+    localparam EVALUATE = 3'd4;
 
     reg [2:0] state;
     reg [CNT_W-1:0] idx;
     reg [CYC_W-1:0] cycles_left;
+    reg [ACC_W-1:0] tolerance_q;
 
     // Convergence checking registers and wires
     reg is_first_iteration;
     reg exceeded_tolerance;
+    reg compare_valid;
+    reg signed [ACC_W-1:0] compare_new_q;
+    reg signed [ACC_W-1:0] compare_old_q;
 
     wire is_readout_phase = (state == READOUT);
     
-    // Difference calculation
-    wire signed [ACC_W:0] diff = $signed(mm_rd_data) - $signed(state_mem_rdata);
-    wire [ACC_W:0] abs_diff = diff[ACC_W] ? -diff : diff;
-    wire [ACC_W:0] tol_ext  = {1'b0, tolerance};
-    
-    wire current_exceeds = (abs_diff > tol_ext);
+    wire current_exceeds;
     wire will_exceed     = exceeded_tolerance | current_exceeds;
+
+    convergence_compare #(
+        .WIDTH(ACC_W)
+    ) convergence_cmp (
+        .new_value(compare_new_q),
+        .old_value(compare_old_q),
+        .tolerance(tolerance_q),
+        .exceeds_tolerance(current_exceeds)
+    );
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -117,9 +127,13 @@ module markov_top #(
             idx                <= 0;
             mm_rd_addr         <= 0;
             cycles_left        <= 0;
+            tolerance_q        <= 0;
             vec_w_en           <= 0;
             is_first_iteration <= 1;
             exceeded_tolerance <= 0;
+            compare_valid       <= 0;
+            compare_new_q       <= 0;
+            compare_old_q       <= 0;
         end
         else begin
 
@@ -133,10 +147,14 @@ module markov_top #(
                     if (start) begin
                         need_load          <= 1'b1;
                         cycles_left        <= (max_cycles == 0) ? 0 : max_cycles - 1'b1;
+                        tolerance_q        <= tolerance;
                         is_first_iteration <= 1'b1;
                         converged          <= 1'b0;
+                        state              <= LOAD;
                     end
+                end
 
+                LOAD: begin
                     if (load_ready) begin
                         need_load <= 1'b0;
                         mm_start  <= 1'b1;
@@ -151,17 +169,38 @@ module markov_top #(
                         state              <= READOUT;
                         // Force tolerance exceeded on first pass to ensure at least two iterations occur
                         exceeded_tolerance <= is_first_iteration ? 1'b1 : 1'b0;
+                        compare_valid       <= 1'b0;
                     end
                 end
 
                 READOUT: begin
+                    // Register both comparator operands.  This prevents the
+                    // external read-address mux from feeding the arithmetic
+                    // convergence path and pipelines the wide comparison.
+                    compare_new_q <= mm_rd_data;
+                    compare_old_q <= state_mem_rdata;
+                    compare_valid <= 1'b1;
+
                     vec_w_addr <= idx;
                     vec_w_data <= mm_rd_data;
                     vec_w_en   <= 1;
 
                     if (idx == N-1) begin
                         is_first_iteration <= 1'b0;
+                        state               <= EVALUATE;
+                    end
+                    else begin
+                        idx        <= idx + 1'b1;
+                        mm_rd_addr <= idx + 1'b1;
+                        if (compare_valid && current_exceeds)
+                            exceeded_tolerance <= 1'b1;
+                    end
+                end
 
+                // The final comparison and final registered state-memory write
+                // both complete on this edge.  After it, readback is safe and
+                // the next iteration may begin without adding a chain cycle.
+                EVALUATE: begin
                         if (cycles_left == 0 || !will_exceed) begin
                             chain_done <= 1'b1;
                             converged  <= !will_exceed;
@@ -170,15 +209,8 @@ module markov_top #(
                         else begin
                             cycles_left <= cycles_left - 1'b1;
                             need_load   <= 1'b1;
-                            state       <= IDLE;
+                            state       <= LOAD;
                         end
-                    end
-                    else begin
-                        idx        <= idx + 1'b1;
-                        mm_rd_addr <= idx + 1'b1;
-                        if (current_exceeds) 
-                            exceeded_tolerance <= 1'b1;
-                    end
                 end
 
             endcase
@@ -196,7 +228,10 @@ module markov_top #(
     localparam signed [ACC_W-1:0] DW_MAX = (1 <<< (DW-1)) - 1;
     localparam signed [ACC_W-1:0] DW_MIN = -(1 <<< (DW-1));
 
-    wire trigger = start | need_load;
+    // A raw start is accepted only by the controller's IDLE state.  This
+    // prevents a start pulse during compute/readout from disturbing the loader.
+    wire new_chain_start = start && (state == IDLE);
+    wire trigger = new_chain_start | need_load;
 
     reg [1:0] ldr_state;
     reg [ADDR_W-1:0] load_count;
@@ -214,9 +249,16 @@ module markov_top #(
 
                 S_IDLE: begin
                     load_ready <= 1'b0;
-                    if (trigger) begin
+                    if (new_chain_start) begin
+                        // Every independent chain uses its new matrix and
+                        // initial vector.  Only iterations within one chain
+                        // use state-memory feedback and skip the P reload.
+                        first_pass <= 1'b1;
                         load_count <= 0;
-                        // P never changes across passes, so only reload it the first time
+                        ldr_state <= S_LOAD_P;
+                    end
+                    else if (need_load) begin
+                        load_count <= 0;
                         ldr_state <= first_pass ? S_LOAD_P : S_LOAD_X;
                     end
                 end

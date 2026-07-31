@@ -1,0 +1,11 @@
+Selected run: runs/RUN_CODEX_CONV_FULL09_2026-07-29
+
+P/R   Partial  Required  Net                           Pin           Layer
+1.31  522.67   400.00    net1893                       _10335_/C     met1
+1.26  503.34   400.00    net924                        fanout923/A   met1
+1.22  487.25   400.00    net1267                       fanout1266/A  met1
+1.20  480.22   400.00    convergence_cmp.tol_ext[7]   _12013_/A0   met1
+
+Found 4 net violations and 4 pin violations.
+Source:
+runs/RUN_CODEX_CONV_FULL09_2026-07-29/46-openroad-checkantennas-1/reports/antenna_summary.rpt

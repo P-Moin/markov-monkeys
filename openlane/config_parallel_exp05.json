@@ -1,0 +1,26 @@
+{
+    "DESIGN_NAME": "markov_top",
+    "VERILOG_FILES": [
+        "dir::rtl/compute/Memory.sv",
+        "dir::rtl/compute/mac_unit.sv",
+        "dir::rtl/compute/parallel_matvec_core.sv",
+        "dir::rtl/compute/matmul_top.sv",
+        "dir::rtl/controller/markov_top.v"
+    ],
+    "CLOCK_PORT": "clk",
+    "CLOCK_PERIOD": 17,
+    "MAX_FANOUT_CONSTRAINT": 6,
+    "FP_CORE_UTIL": 35,
+    "PL_TARGET_DENSITY_PCT": 45,
+    "RUN_HEURISTIC_DIODE_INSERTION": false,
+    "GPL_CELL_PADDING": 1,
+    "DPL_CELL_PADDING": 1,
+    "DESIGN_REPAIR_MAX_CAP_PCT": 50,
+    "DESIGN_REPAIR_MAX_SLEW_PCT": 50,
+    "CTS_MAX_CAP": 0.15,
+    "GRT_ANTENNA_ITERS": 10,
+    "GRT_ANTENNA_MARGIN": 30,
+    "FP_SIZING": "absolute",
+    "DIE_AREA": [0, 0, 600, 600],
+    "RUN_ANTENNA_REPAIR": true
+}

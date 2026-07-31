@@ -1,0 +1,18 @@
+runs/RUN_CODEX_CONV_FULL09_2026-07-29
+
+Selected convergence candidate at 17 ns.
+
+Passes:
+- complete RTL regression
+- setup and hold at all nine reported corners
+- max capacitance
+- routing DRC, Magic DRC, and KLayout DRC
+- LVS
+
+Remaining:
+- 55 max-slew violations at max_ss_100C_1v60
+- 4 antenna nets / 4 pins
+
+This candidate is near-clean, not signoff-clean. It was selected over the
+three-antenna-iteration candidate (6 antenna nets) and slew-30 candidate
+(180 max-slew violations and 5 antenna nets).

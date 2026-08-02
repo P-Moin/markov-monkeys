@@ -3,7 +3,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-mkdir -p .codex_build
+build_dir="${MARKOV_BUILD_DIR:-build/sim}"
+mkdir -p "$build_dir"
 
 compute_sources=(
     rtl/compute/Memory.sv
@@ -17,9 +18,9 @@ run_test() {
     local output="$2"
     shift 2
     echo "== $top =="
-    iverilog -g2012 -s "$top" -o ".codex_build/$output.vvp" "$@"
-    local log=".codex_build/$output.log"
-    vvp ".codex_build/$output.vvp" | tee "$log"
+    iverilog -g2012 -s "$top" -o "$build_dir/$output.vvp" "$@"
+    local log="$build_dir/$output.log"
+    vvp "$build_dir/$output.vvp" | tee "$log"
     if ! grep -qx "RESULT: PASS" "$log"; then
         echo "ERROR: $top did not report an unambiguous pass" >&2
         return 1
@@ -52,13 +53,13 @@ run_test markov_top_tb markov_top_tb \
 run_test markov_top_tb markov_top_converge_tb \
     "${compute_sources[@]}" rtl/controller/convergence_compare.sv \
     rtl/controller/markov_top.v rtl/controller/markov_top_converge.v \
-    tb/markov_top_converge_tb
+    tb/markov_top_converge_tb.sv
 
 run_test markov_top_tb markov_top_converge_n4_tb \
     -Pmarkov_top_tb.N=4 "${compute_sources[@]}" \
     rtl/controller/convergence_compare.sv \
     rtl/controller/markov_top.v rtl/controller/markov_top_converge.v \
-    tb/markov_top_converge_tb
+    tb/markov_top_converge_tb.sv
 
 run_test convergence_compare_tb convergence_compare_tb \
     rtl/controller/convergence_compare.sv tb/convergence_compare_tb.sv

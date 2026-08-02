@@ -84,7 +84,7 @@ Primary metric sources:
 The regression was rerun before publishing this report:
 
 ```sh
-cd /home/pmoin/asic/markov-monkeys
+cd markov-monkeys
 scripts/run_regression.sh
 ```
 
@@ -350,13 +350,14 @@ These are nominal-TT static power-grid estimates from the implemented design.
 
 ## Final GDS artifacts
 
-The published branch contains all three final stream-outs:
+The repository publishes all three final stream-outs under
+`artifacts/gds/parallel_convergence/`:
 
 | Artifact | Size | SHA-256 |
 |---|---:|---|
-| `final/gds/markov_top_converge.gds` | 40,910,110 bytes | `043643eee7f28b768d9da2f27d392c7a9881e9627cd9d27da74e2533a833af5a` |
-| `final/mag_gds/markov_top_converge.magic.gds` | 40,910,110 bytes | `043643eee7f28b768d9da2f27d392c7a9881e9627cd9d27da74e2533a833af5a` |
-| `final/klayout_gds/markov_top_converge.klayout.gds` | 18,873,746 bytes | `444c4912bf06197407b2b2585e9a0c2fabb4c5f810287bbd555d30a56fb0ea3e` |
+| [`markov_top_converge.gds`](../artifacts/gds/parallel_convergence/markov_top_converge.gds) | 40,910,110 bytes | `043643eee7f28b768d9da2f27d392c7a9881e9627cd9d27da74e2533a833af5a` |
+| [`markov_top_converge.magic.gds`](../artifacts/gds/parallel_convergence/markov_top_converge.magic.gds) | 40,910,110 bytes | `043643eee7f28b768d9da2f27d392c7a9881e9627cd9d27da74e2533a833af5a` |
+| [`markov_top_converge.klayout.gds`](../artifacts/gds/parallel_convergence/markov_top_converge.klayout.gds) | 18,873,746 bytes | `444c4912bf06197407b2b2585e9a0c2fabb4c5f810287bbd555d30a56fb0ea3e` |
 
 The generic final stream-out and the explicitly named Magic stream-out are
 byte-identical. The KLayout stream-out is distinct. All three were validated
@@ -387,19 +388,19 @@ slew, fanout, and antenna violations remain.
 RTL regression:
 
 ```sh
-cd /home/pmoin/asic/markov-monkeys
+cd markov-monkeys
 scripts/run_regression.sh
 ```
 
 Full OpenLane run:
 
 ```sh
-cd /home/pmoin/asic/markov-monkeys
-df -h /home/pmoin
+cd markov-monkeys
+df -h .
 du -sh runs
-nix run --offline /home/pmoin/openlane2#openlane -- \
+openlane \
   openlane/config_converge_exp09.json \
-  --design-dir /home/pmoin/asic/markov-monkeys \
+  --design-dir . \
   --run-tag RUN_CODEX_CONV_FULL09_2026-07-29 \
   --condensed --hide-progress-bar -j 8
 ```

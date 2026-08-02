@@ -2,46 +2,46 @@
 2026-07-30T09:52:49-07:00 storage check passed available=890G
 2026-07-30T09:52:49-07:00 experiment inventory complete count=21
 2026-07-30T09:58:31-07:00 EXP10 flow started commit=e8d7349
-2026-07-30T09:58:31-07:00 EXP10 flow failed stage=not_started run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp10/RERUN_FULL_EXP10
+2026-07-30T09:58:31-07:00 EXP10 flow failed stage=not_started run=openlane/reruns/full_metrics/exp10/RERUN_FULL_EXP10
 2026-07-30T09:58:59-07:00 EXP10 flow started commit=e8d7349
-2026-07-30T10:08:59-07:00 EXP10 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp10/RERUN_FULL_EXP10
+2026-07-30T10:08:59-07:00 EXP10 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp10/RERUN_FULL_EXP10
 2026-07-30T10:09:46-07:00 EXP01 flow started commit=e8d7349
-2026-07-30T10:19:50-07:00 EXP01 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp01/RERUN_FULL_EXP01
+2026-07-30T10:19:50-07:00 EXP01 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp01/RERUN_FULL_EXP01
 2026-07-30T10:19:50-07:00 EXP02 flow started commit=e8d7349
-2026-07-30T10:29:57-07:00 EXP02 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp02/RERUN_FULL_EXP02
+2026-07-30T10:29:57-07:00 EXP02 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp02/RERUN_FULL_EXP02
 2026-07-30T10:29:57-07:00 EXP03 flow started commit=e8d7349
-2026-07-30T10:39:51-07:00 EXP03 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp03/RERUN_FULL_EXP03
+2026-07-30T10:39:51-07:00 EXP03 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp03/RERUN_FULL_EXP03
 2026-07-30T10:39:52-07:00 EXP04 flow started commit=e8d7349
-2026-07-30T10:49:32-07:00 EXP04 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp04/RERUN_FULL_EXP04
+2026-07-30T10:49:32-07:00 EXP04 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp04/RERUN_FULL_EXP04
 2026-07-30T10:49:32-07:00 EXP13 flow started commit=546fdb9
-2026-07-30T11:00:02-07:00 EXP13 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp13/RERUN_FULL_EXP13
+2026-07-30T11:00:02-07:00 EXP13 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp13/RERUN_FULL_EXP13
 2026-07-30T11:00:02-07:00 EXP14 flow started commit=546fdb9
-2026-07-30T11:11:30-07:00 EXP14 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp14/RERUN_FULL_EXP14
+2026-07-30T11:11:30-07:00 EXP14 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp14/RERUN_FULL_EXP14
 2026-07-30T11:11:31-07:00 EXP15 flow started commit=546fdb9
-2026-07-30T11:22:50-07:00 EXP15 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp15/RERUN_FULL_EXP15
+2026-07-30T11:22:50-07:00 EXP15 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp15/RERUN_FULL_EXP15
 2026-07-30T11:22:50-07:00 EXP16 flow started commit=546fdb9
-2026-07-30T11:33:22-07:00 EXP16 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp16/RERUN_FULL_EXP16
+2026-07-30T11:33:22-07:00 EXP16 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp16/RERUN_FULL_EXP16
 2026-07-30T11:33:22-07:00 EXP17 flow started commit=546fdb9
-2026-07-30T11:44:31-07:00 EXP17 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp17/RERUN_FULL_EXP17
+2026-07-30T11:44:31-07:00 EXP17 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp17/RERUN_FULL_EXP17
 2026-07-30T11:45:06-07:00 EXP00 flow started commit=372a29d
-2026-07-30T11:51:57-07:00 EXP00 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp00/RERUN_FULL_EXP00
+2026-07-30T11:51:57-07:00 EXP00 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp00/RERUN_FULL_EXP00
 2026-07-30T11:51:57-07:00 EXP05 flow started commit=e8d7349
-2026-07-30T12:02:30-07:00 EXP05 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp05/RERUN_FULL_EXP05
+2026-07-30T12:02:30-07:00 EXP05 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp05/RERUN_FULL_EXP05
 2026-07-30T12:02:30-07:00 EXP06 flow started commit=e8d7349
-2026-07-30T12:13:15-07:00 EXP06 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp06/RERUN_FULL_EXP06
+2026-07-30T12:13:15-07:00 EXP06 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp06/RERUN_FULL_EXP06
 2026-07-30T12:13:15-07:00 EXP07 flow started commit=e8d7349
-2026-07-30T12:23:35-07:00 EXP07 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp07/RERUN_FULL_EXP07
+2026-07-30T12:23:35-07:00 EXP07 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp07/RERUN_FULL_EXP07
 2026-07-30T12:23:35-07:00 EXP08 flow started commit=e8d7349
-2026-07-30T12:35:51-07:00 EXP08 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp08/RERUN_FULL_EXP08
+2026-07-30T12:35:51-07:00 EXP08 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp08/RERUN_FULL_EXP08
 2026-07-30T12:35:51-07:00 EXP09 flow started commit=e8d7349
-2026-07-30T12:45:31-07:00 EXP09 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp09/RERUN_FULL_EXP09
+2026-07-30T12:45:31-07:00 EXP09 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp09/RERUN_FULL_EXP09
 2026-07-30T12:45:31-07:00 EXP11 flow started commit=e8d7349
-2026-07-30T12:56:14-07:00 EXP11 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp11/RERUN_FULL_EXP11
+2026-07-30T12:56:14-07:00 EXP11 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp11/RERUN_FULL_EXP11
 2026-07-30T12:56:15-07:00 EXP12 flow started commit=e8d7349
-2026-07-30T13:06:27-07:00 EXP12 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp12/RERUN_FULL_EXP12
+2026-07-30T13:06:27-07:00 EXP12 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp12/RERUN_FULL_EXP12
 2026-07-30T13:06:27-07:00 EXP18 flow started commit=546fdb9
-2026-07-30T13:17:44-07:00 EXP18 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp18/RERUN_FULL_EXP18
+2026-07-30T13:17:44-07:00 EXP18 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp18/RERUN_FULL_EXP18
 2026-07-30T13:17:44-07:00 EXP19 flow started commit=546fdb9
-2026-07-30T13:28:54-07:00 EXP19 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp19/RERUN_FULL_EXP19
+2026-07-30T13:28:54-07:00 EXP19 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp19/RERUN_FULL_EXP19
 2026-07-30T13:28:54-07:00 EXP20 flow started commit=546fdb9
-2026-07-30T13:39:41-07:00 EXP20 flow complete stage=misc-reportmanufacturability run=/home/pmoin/asic/markov-monkeys/openlane/reruns/full_metrics/exp20/RERUN_FULL_EXP20
+2026-07-30T13:39:41-07:00 EXP20 flow complete stage=misc-reportmanufacturability run=openlane/reruns/full_metrics/exp20/RERUN_FULL_EXP20

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 from pathlib import Path
 
 
@@ -147,11 +148,27 @@ def fmt(value) -> str:
     return str(value)
 
 
+def portableize(value):
+    """Remove machine-specific prefixes from published campaign data."""
+    if isinstance(value, dict):
+        return {key: portableize(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [portableize(item) for item in value]
+    if isinstance(value, str):
+        value = value.replace(str(ROOT) + "/", "")
+        value = re.sub(
+            r"^/home/[^/]+/(?:[^/]+/)*markov-monkeys/", "", value
+        )
+        value = re.sub(r"/tmp/markov_experiment_worktrees/exp\d{2}/", "", value)
+    return value
+
+
 experiments = []
 for number in range(21):
     path = OUT / f"exp{number:02d}.json"
     with path.open(encoding="utf-8") as handle:
-        item = json.load(handle)
+        item = portableize(json.load(handle))
+    path.write_text(json.dumps(item, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     item["major_difference_flags"] = differences(item)
     experiments.append(item)
 
@@ -160,7 +177,12 @@ with (OUT / "experiments_full_metrics.json").open("w", encoding="utf-8") as hand
     handle.write("\n")
 
 with (OUT / "experiments_full_metrics.csv").open("w", newline="", encoding="utf-8") as handle:
-    writer = csv.DictWriter(handle, fieldnames=FIELDS, extrasaction="ignore")
+    writer = csv.DictWriter(
+        handle,
+        fieldnames=FIELDS,
+        extrasaction="ignore",
+        lineterminator="\n",
+    )
     writer.writeheader()
     for item in experiments:
         writer.writerow({field: item.get(field) for field in FIELDS})

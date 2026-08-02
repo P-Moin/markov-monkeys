@@ -7,6 +7,7 @@ import argparse
 import csv
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -18,14 +19,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "results" / "full_metrics"
 RERUN_ROOT = ROOT / "openlane" / "reruns" / "full_metrics"
-WORKTREE_ROOT = Path("/tmp/markov_experiment_worktrees")
-OPENLANE = [
-    "/nix/var/nix/profiles/default/bin/nix",
-    "run",
-    "--offline",
-    "/home/pmoin/openlane2#openlane",
-    "--",
-]
+WORKTREE_ROOT = Path(
+    os.environ.get("MARKOV_WORKTREE_ROOT", "/tmp/markov_experiment_worktrees")
+)
+OPENLANE = shlex.split(os.environ.get("OPENLANE_COMMAND", "openlane"))
 
 
 def now() -> str:

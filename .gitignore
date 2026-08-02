@@ -1,0 +1,36 @@
+# Simulation products
+build/
+*.vvp
+*.vcd
+*.fst
+*.lxt
+*.log
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OpenLane/OpenROAD generated runs
+runs/
+openlane/runs/
+openlane/reruns/
+openlane/**/runs/
+
+# Local tool and editor state
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local scratch files
+check_run.sh
+config.json
+
+# Keep intentionally published implementation artifacts
+!artifacts/
+!artifacts/**

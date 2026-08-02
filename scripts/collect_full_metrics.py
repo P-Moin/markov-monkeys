@@ -10,6 +10,9 @@ from pathlib import Path
 from typing import Any
 
 
+ROOT = Path(__file__).resolve().parents[1]
+
+
 METRIC_KEYS = {
     "setup_wns_ns": "timing__setup__ws",
     "setup_tns_ns": "timing__setup__tns",
@@ -32,6 +35,30 @@ METRIC_KEYS = {
     "klayout_drc": "klayout__drc_error__count",
     "lvs_errors": "design__lvs_error__count",
 }
+
+
+def relative_source(value: str | None) -> str | None:
+    if value is None:
+        return None
+    path = Path(value)
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return path.name
+
+
+def portable_source_files(values: Any) -> Any:
+    if not isinstance(values, list):
+        return values
+    portable = []
+    for value in values:
+        text = str(value)
+        marker = "/rtl/"
+        if marker in text:
+            portable.append("rtl/" + text.split(marker, 1)[1])
+        else:
+            portable.append(relative_source(text))
+    return portable
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -155,7 +182,7 @@ def collect(args: argparse.Namespace) -> dict[str, Any]:
         "rtl_commit": metadata.get("rtl_commit", metadata.get("git_commit")),
         "mapping_confidence": metadata.get("mapping_confidence"),
         "config_file": metadata.get("config_file"),
-        "run_directory": str(run_dir),
+        "run_directory": str(run_dir.relative_to(ROOT)),
         "flow_status": status,
         "failure_stage": failure_stage,
         "clock_ns": resolved.get("CLOCK_PERIOD", metadata.get("clock_ns")),
@@ -178,9 +205,9 @@ def collect(args: argparse.Namespace) -> dict[str, Any]:
         "random_seed": resolved.get("PL_RANDOM_GLB_PLACEMENT", metadata.get("random_seed")),
         "compatibility_patch": metadata.get("compatibility_patch"),
         "notes": metadata.get("notes"),
-        "metrics_source": metrics_source,
-        "synthesis_source": synth_source,
-        "source_files": resolved.get("VERILOG_FILES"),
+        "metrics_source": relative_source(metrics_source),
+        "synthesis_source": relative_source(synth_source),
+        "source_files": portable_source_files(resolved.get("VERILOG_FILES")),
         "last_stage": last_stage(run_dir),
     }
 

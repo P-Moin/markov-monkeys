@@ -1,4 +1,7 @@
-runs/RUN_CODEX_CONV_FULL09_2026-07-29
+Selected experiment: 18
+Configuration: openlane/config_converge_exp09.json
+Published layouts: artifacts/gds/parallel_convergence/
+Historical run tag: RUN_CODEX_CONV_FULL09_2026-07-29
 
 Selected convergence candidate at 17 ns.
 

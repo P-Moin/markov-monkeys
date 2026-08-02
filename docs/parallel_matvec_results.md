@@ -230,27 +230,27 @@ starting from `openlane/config.json`.
 Full RTL regression:
 
 ```sh
-cd /home/pmoin/asic/markov-monkeys
+cd markov-monkeys
 scripts/run_regression.sh
 ```
 
 The script uses this pattern for every test:
 
 ```sh
-iverilog -g2012 -s TOP -o .codex_build/TEST.vvp RTL_SOURCES TB_SOURCE
-vvp .codex_build/TEST.vvp
+iverilog -g2012 -s TOP -o build/sim/TEST.vvp RTL_SOURCES TB_SOURCE
+vvp build/sim/TEST.vvp
 ```
 
 The exact source lists are recorded in `scripts/run_regression.sh`.
 
-OpenLane 2.3.10 was invoked offline through the already installed local flake.
-The standalone wrapper was not on the login shell's PATH:
+OpenLane 2.3.10 was invoked from the existing project environment. The command
+below assumes the `openlane` wrapper is available on `PATH`:
 
 ```sh
-cd /home/pmoin/asic/markov-monkeys
-nix run --offline /home/pmoin/openlane2#openlane -- \
+cd markov-monkeys
+openlane \
   openlane/config_parallel_exp06.json \
-  --design-dir /home/pmoin/asic/markov-monkeys \
+  --design-dir . \
   --run-tag RUN_CODEX_PAR_FULL06_TWOITER_2026-07-28 \
   --condensed --hide-progress-bar -j 8
 ```
@@ -259,7 +259,7 @@ Every full experiment used the same command, substituting the config and run
 tag recorded in `optimization/experiments.csv`. Before each launch:
 
 ```sh
-df -h /home/pmoin
+df -h .
 du -sh runs
 ```
 

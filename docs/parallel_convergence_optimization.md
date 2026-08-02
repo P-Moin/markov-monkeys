@@ -85,7 +85,7 @@ and the existing feedback truncation behavior.
 Final command:
 
 ```sh
-cd /home/pmoin/asic/markov-monkeys
+cd markov-monkeys
 scripts/run_regression.sh
 ```
 
@@ -259,22 +259,22 @@ Tool versions/availability:
 ```sh
 command -v iverilog
 command -v vvp
-nix run --offline /home/pmoin/openlane2#openlane -- --version
+openlane --version
 ```
 
 Regression:
 
 ```sh
-cd /home/pmoin/asic/markov-monkeys
+cd markov-monkeys
 scripts/run_regression.sh
 ```
 
 Pre-PnR architecture evidence:
 
 ```sh
-nix run --offline /home/pmoin/openlane2#openlane -- \
+openlane \
   openlane/config_converge_exp09.json \
-  --design-dir /home/pmoin/asic/markov-monkeys \
+  --design-dir . \
   --run-tag RUN_CODEX_CONV_PREPNR13_TOLREG_2026-07-29 \
   --to OpenROAD.STAPrePNR --condensed --hide-progress-bar -j 8
 ```
@@ -282,11 +282,11 @@ nix run --offline /home/pmoin/openlane2#openlane -- \
 Selected full run:
 
 ```sh
-df -h /home/pmoin
+df -h .
 du -sh runs
-nix run --offline /home/pmoin/openlane2#openlane -- \
+openlane \
   openlane/config_converge_exp09.json \
-  --design-dir /home/pmoin/asic/markov-monkeys \
+  --design-dir . \
   --run-tag RUN_CODEX_CONV_FULL09_2026-07-29 \
   --condensed --hide-progress-bar -j 8
 ```
@@ -294,9 +294,9 @@ nix run --offline /home/pmoin/openlane2#openlane -- \
 Isolated antenna rerun:
 
 ```sh
-nix run --offline /home/pmoin/openlane2#openlane -- \
+openlane \
   openlane/config_converge_exp10.json \
-  --design-dir /home/pmoin/asic/markov-monkeys \
+  --design-dir . \
   --run-tag RUN_CODEX_CONV_ANT10_2026-07-29 \
   --from OpenROAD.RepairAntennas \
   --with-initial-state \
@@ -307,12 +307,12 @@ nix run --offline /home/pmoin/openlane2#openlane -- \
 Slew-target full run:
 
 ```sh
-nix run --offline /home/pmoin/openlane2#openlane -- \
+openlane \
   openlane/config_converge_exp11.json \
-  --design-dir /home/pmoin/asic/markov-monkeys \
+  --design-dir . \
   --run-tag RUN_CODEX_CONV_FULL11_SLEW30_2026-07-29 \
   --condensed --hide-progress-bar -j 8
 ```
 
-All commands used the existing local OpenLane 2.3.10 flake and PDK without
+All commands used the existing OpenLane 2.3.10 environment and PDK without
 network access or package installation. No prior run was deleted.
